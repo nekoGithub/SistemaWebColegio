@@ -1,0 +1,24 @@
+# Ignora el entorno virtual
+venv/
+env/
+
+# Ignora archivos de base de datos locales
+*.sqlite
+*.db
+
+# Ignora archivos de configuración del IDE
+.idea/
+.vscode/
+
+# Ignora archivos de logs
+*.log
+
+# Ignora archivos de caché y compilación
+__pycache__/
+*.pyc
+
+# Ignora credenciales (si las tienes en archivos de configuración)
+config.py
+
+# Si usas Flask:
+instance/
