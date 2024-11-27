@@ -27,21 +27,20 @@ def load_user(id):
 def index():
     return redirect(url_for('login'))
 
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         usuario = request.form['usuario']
         contrasena = request.form['contrasena']
-        user = User(0, usuario, contrasena)  # Crea el objeto user solo con usuario y contrasena
+        user = User(0, usuario, contrasena)  
         logged_user = ModelUser.login(db, user)
-        if logged_user:  # Si el usuario fue encontrado
+        if logged_user:  
             login_user(logged_user)
             return redirect(url_for('home'))
         else:
             flash("Usuario o contraseña incorrectos.")
-            return render_template('auth/login.html')  # Renderiza la plantilla con el mensaje de error
-    return render_template('auth/login.html')  # Si es GET, solo muestra el formulario de login
+            return render_template('auth/login.html')  
+    return render_template('auth/login.html')  
 
 
 
@@ -54,6 +53,10 @@ def logout():
 @app.route('/home')
 def home():
     return render_template('home.html')
+
+@app.route('/users')
+def users():
+    return render_template('users/users.html')
 
 
 @app.route('/protected')

@@ -1,0 +1,53 @@
+<!-- templates/users.html -->
+{% extends 'base.html' %} {% block title %}Usuarios{% endblock %} {% block
+content %}
+  
+    <div class="container-fluid">
+        <h1 class="h3 mb-4 text-gray-800">Usuarios</h1>
+
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Listado de Usuarios</h6>
+            </div>
+            <div class="card-body">
+                <!-- Tabla con la clase DataTable -->
+                <table id="usersTable" class="display" cellspacing="0" width="100%">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Aquí puedes rellenar con tus datos dinámicos o ejemplos -->
+                        <tr>
+                            <td>1</td>
+                            <td>Juan Pérez</td>
+                            <td>juan@example.com</td>
+                            <td>Admin</td>
+                            <td>
+                                <button class="btn btn-primary">Ver</button>
+                                <button class="btn btn-danger">Eliminar</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>Ana Gómez</td>
+                            <td>ana@example.com</td>
+                            <td>Usuario</td>
+                            <td>
+                                <button class="btn btn-primary">Ver</button>
+                                <button class="btn btn-danger">Eliminar</button>
+                            </td>
+                        </tr>
+                        <!-- Puedes seguir agregando más filas de datos aquí -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

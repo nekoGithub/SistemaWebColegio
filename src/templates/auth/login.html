@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block body %}
-<form class="form-signin" action="/login" method="POST">
+<form class="form-signin text-center" action="/login" method="POST">
     <img class="mb-4" src="{{ url_for('static', filename='img/logo.avif') }}" alt="" width="70" height="60">
     {% with messages = get_flashed_messages() %}
 
