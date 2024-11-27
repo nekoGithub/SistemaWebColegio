@@ -39,6 +39,9 @@
       href="{{ url_for('static', filename='css/sb-admin-2.min.css') }}"
       rel="stylesheet"
     />
+    
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.2.0/css/buttons.dataTables.min.css">
     {% block customCSS %} {% endblock %}
   </head>
 
@@ -81,6 +84,13 @@
           <a class="nav-link" href="{{ url_for('users') }}">
             <i class="fas fa-fw fa-users"></i>
             <span>Usuarios</span></a
+          >
+        </li>
+        <!-- Nav Item - Charts -->
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('report_users') }}">
+            <i class="fas fa-fw fa-users"></i>
+            <span>Reportes Usuarios</span></a
           >
         </li>
 
@@ -182,9 +192,13 @@
                   aria-haspopup="true"
                   aria-expanded="false"
                 >
-                  <span class="mr-2 d-none d-lg-inline text-gray-600 small"
-                    >Brayan Sonco Machaca</span
-                  >
+                  <span class="mr-2 d-none d-lg-inline text-gray-600 small">
+                    {% if current_user.is_authenticated %}
+                        {{ current_user.nombre_completo }}
+                    {% else %}
+                        Invitado
+                    {% endif %}
+                  </span>
                   <img
                     class="img-profile rounded-circle"
                     src="{{ url_for('static', filename='img/undraw_profile.svg') }}"
@@ -278,7 +292,7 @@
         </div>
       </div>
     </div>
-
+   
     <!-- Bootstrap core JavaScript-->
     <script src="{{ url_for('static', filename='vendor/jquery/jquery.min.js') }}"></script>
     <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
@@ -298,8 +312,37 @@
     <script src="js/demo/chart-area-demo.js"></script>
     <script src="{{ url_for('static', filename='js/demo/chart-area-demo.js') }}"></script>
     <script src="js/demo/chart-pie-demo.js"></script>
-    <script src="{{ url_for('static', filename='js/demo/chart-pie-demo.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/demo/chart-pie-demo.js') }}"></script>   
+    <!-- Datatables - reportes - idioma español -->
+    <br><script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css" />
+<script src="http://code.jquery.com/ui/1.10.2/jquery-ui.js"></script>
+<script src="https://cdn.datatables.net/1.10.4/js/jquery.dataTables.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.4/css/jquery.dataTables.min.css">
+ 
+<script type="text/javascript" language="javascript" src="//code.jquery.com/jquery-1.12.3.js">
+</script>
+<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js">
+</script>
+<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.2.1/js/dataTables.buttons.min.js">
+</script>
+<script type="text/javascript" language="javascript" src="//cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js">
+</script>
+<script type="text/javascript" language="javascript" src="//cdn.rawgit.com/bpampuch/pdfmake/0.1.18/build/pdfmake.min.js">
+</script>
+<script type="text/javascript" language="javascript" src="//cdn.rawgit.com/bpampuch/pdfmake/0.1.18/build/vfs_fonts.js">
+</script>
+<script type="text/javascript" language="javascript" src="//cdn.datatables.net/buttons/1.2.1/js/buttons.html5.min.js">
+</script>
+<!-- Incluir CSS de selección -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/select/1.3.3/css/select.dataTables.min.css">
+<!-- Incluir JS de selección -->
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/select/1.3.3/js/dataTables.select.min.js"></script>
 
+    {% block script %}
+    
+    {% endblock %}
+   
     {% endblock %}
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"

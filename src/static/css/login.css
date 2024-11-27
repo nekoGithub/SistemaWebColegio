@@ -33,3 +33,26 @@ body {
   border-top-left-radius: 0;
   border-top-right-radius: 0;
 }
+
+/* Css bottoones */
+/* Cambiar el color de los botones */
+.dt-button {
+  background-color: #007bff; /* Azul */
+  color: white; /* Texto blanco */
+  border-radius: 4px; /* Bordes redondeados */
+}
+
+/* Cambiar el color al pasar el mouse */
+.dt-button:hover {
+  background-color: #0056b3; /* Azul más oscuro al pasar el mouse */
+}
+
+/* Cambiar el color del botón específico de Excel */
+.dt-button-collection .dt-button-collection-item.excelHtml5 {
+  background-color: #28a745; /* Verde para Excel */
+}
+
+/* Cambiar el color del botón específico de PDF */
+.dt-button-collection .dt-button-collection-item.pdfHtml5 {
+  background-color: #dc3545; /* Rojo para PDF */
+}

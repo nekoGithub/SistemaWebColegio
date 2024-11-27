@@ -1,0 +1,82 @@
+<!-- templates/users.html -->
+{% extends 'base.html' %} {% block title %}Usuarios{% endblock %} {% block
+content %}
+
+<div class="container-fluid">
+  <h1 class="h3 mb-4 text-gray-800">Usuarios</h1>
+
+  <div class="card shadow mb-4">
+    <div
+      class="card-header py-3 d-flex justify-content-between align-items-center"
+    >
+      <h6 class="m-0 font-weight-bold text-primary">Reportes de Usuarios</h6>
+    </div>
+    <div class="card-body">
+      <!-- Tabla con la clase DataTable -->
+      <table id="usersTable" class="display" cellspacing="0" width="100%">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Usuario</th>
+            <th>Nombre completo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+          <tr>
+            <td>{{ user[0] }}</td>
+            <td>{{ user[1] }}</td>
+            <td>{{ user[2] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %} {% block script %}
+
+<script>
+  $(document).ready(function () {
+    $("#usersTable").DataTable({
+      language: {
+        url: "//cdn.datatables.net/plug-ins/2.1.8/i18n/es-ES.json",
+      },
+      dom: "Bfrtip",
+      buttons: [
+        "copyHtml5",
+        "excelHtml5",
+        "csvHtml5",
+        {
+          extend: "pdfHtml5",
+          text: "Generar PDF",
+          orientation: "landscape",
+          title: "Reporte de Usuarios",
+          customize: function (doc) {
+            doc.content[1].alignment = "center";
+            doc.content[1].table.widths = ["33%", "33%", "33%"];
+
+            doc.styles.tableHeader = {
+              fontSize: 18,
+              bold: true,
+              fillColor: "#007bff",
+              color: "#ffffff",
+              alignment: "center",
+            };
+            doc.styles.tableBody = {
+              fontSize: 16,
+              alignment: "center",
+            };
+            doc.styles.title = {
+              fontSize: 20,
+              bold: true,
+              alignment: "center",
+            };
+          },
+        },
+      ],
+    });
+  });
+</script>
+{% endblock %}
