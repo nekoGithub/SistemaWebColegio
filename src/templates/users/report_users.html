@@ -16,9 +16,12 @@ content %}
       <table id="usersTable" class="display" cellspacing="0" width="100%">
         <thead>
           <tr>
-            <th>ID</th>
+            <th>Nro</th>
             <th>Usuario</th>
             <th>Nombre completo</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th>Fecha</th>
           </tr>
         </thead>
         <tbody>
@@ -27,6 +30,9 @@ content %}
             <td>{{ user[0] }}</td>
             <td>{{ user[1] }}</td>
             <td>{{ user[2] }}</td>
+            <td>{{ user[3] }}</td>
+            <td>{{ user[4] }}</td>
+            <td>{{ user[5] }}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -41,8 +47,8 @@ content %}
   $(document).ready(function () {
     $("#usersTable").DataTable({
       language: {
-        url: "//cdn.datatables.net/plug-ins/2.1.8/i18n/es-ES.json",
-      },
+        url: '//cdn.datatables.net/plug-ins/2.1.8/i18n/es-MX.json',
+       },
       dom: "Bfrtip",
       buttons: [
         "copyHtml5",
@@ -52,10 +58,10 @@ content %}
           extend: "pdfHtml5",
           text: "Generar PDF",
           orientation: "landscape",
-          title: "Reporte de Usuarios",
+          title: "REPORTE DE USUARIOS",
           customize: function (doc) {
             doc.content[1].alignment = "center";
-            doc.content[1].table.widths = ["33%", "33%", "33%"];
+            doc.content[1].table.widths = ["16%", "16%", "16%","16%", "16%", "16%"];
 
             doc.styles.tableHeader = {
               fontSize: 18,

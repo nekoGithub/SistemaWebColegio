@@ -67,17 +67,19 @@ def users():
 
 @app.route('/create_user', methods=['GET', 'POST'])
 def create_user():
-    if request.method == 'POST':        
+    if request.method == 'POST':
         usuario = request.form['usuario']
         contrasena = request.form['contrasena']
-        nombre_completo = request.form['nombre_completo']        
+        nombre_completo = request.form['nombre_completo']
+        rol = request.form['rol']  # Campo para el rol
+
+        print(f"Datos recibidos: {usuario}, {contrasena}, {nombre_completo}, {rol}")
         
-        print(f"Datos recibidos: {usuario}, {contrasena}, {nombre_completo}")
-        
-        user = User(0, usuario, contrasena, nombre_completo=nombre_completo)
+        # El estado se deja por defecto como "activo" y rol se pasa desde el formulario
+        user = User(0, usuario, contrasena, nombre_completo=nombre_completo, rol=rol, estado="activo")
         
         if ModelUser.create_user(db, user):
-            #flash('Usuario creado exitosamente.', 'success')
+            flash('Usuario creado exitosamente.', 'success')
             return redirect(url_for('users'))
         else:
             flash('Error al crear el usuario.', 'danger')
@@ -85,30 +87,35 @@ def create_user():
     return render_template('users/create_user.html')
 
 
+
 @app.route('/edit_user/<int:user_id>', methods=['GET', 'POST'])
 def edit_user(user_id):
     user = ModelUser.get_by_id(db, user_id)
     
-    if request.method == 'POST':        
+    if request.method == 'POST':
         usuario = request.form['usuario']
         contrasena = request.form['contrasena']
         nombre_completo = request.form['nombre_completo']
-                
+        rol = request.form['rol']  # El rol sí puede ser editado
+        
+        # Si se proporciona una nueva contraseña, se encripta, de lo contrario se mantiene la actual
         if contrasena:
             contrasena_encriptada = generate_password_hash(contrasena)
-        else:            
-            contrasena_encriptada = user.contrasena          
+        else:
+            contrasena_encriptada = user.contrasena
         
-        updated_user = User(user.id, usuario, contrasena_encriptada, nombre_completo)
-                
+        # El estado no se edita y se mantiene igual, lo mismo con el campo updated_at (debería actualizarse automáticamente)
+        updated_user = User(user.id, usuario, contrasena_encriptada, nombre_completo, rol=rol, estado=user.estado)
+
         if ModelUser.update_user(db, updated_user):
-            #flash('Usuario actualizado exitosamente.', 'success')
+            flash('Usuario actualizado exitosamente.', 'success')
             return redirect(url_for('users'))
         else:
             flash('Error al actualizar el usuario.', 'danger')
             return redirect(url_for('edit_user', user_id=user.id))
 
     return render_template('users/edit_user.html', user=user)
+
 
 @app.route('/delete_user/<int:user_id>', methods=['POST'])
 def delete_user(user_id):

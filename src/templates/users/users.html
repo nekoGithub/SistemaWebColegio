@@ -19,9 +19,12 @@ content %}
       <table id="usersTable" class="display" cellspacing="0" width="100%">
         <thead>
           <tr>
-            <th>ID</th>
+            <th>Nro</th>
             <th>Usuario</th>
             <th>Nombre completo</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th>Fecha</th>
             <th></th>
           </tr>
         </thead>
@@ -31,6 +34,9 @@ content %}
             <td>{{ user[0] }}</td>
             <td>{{ user[1] }}</td>
             <td>{{ user[2] }}</td>
+            <td>{{ user[3] }}</td>
+            <td><span class="badge badge-success">{{ user[4] }}</span></td>
+            <td>{{ user[5] }}</td>
             <td>
               <a
                 href="{{ url_for('edit_user', user_id=user[0]) }}"
@@ -72,8 +78,8 @@ content %}
   }); 
   $("#usersTable").DataTable({
     language: {
-        url: '//cdn.datatables.net/plug-ins/2.1.8/i18n/es-ES.json',
-    },    
+        url: '//cdn.datatables.net/plug-ins/2.1.8/i18n/es-MX.json',
+    },   
   });
 </script>
 {% endblock %}

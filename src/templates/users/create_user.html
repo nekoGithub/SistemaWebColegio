@@ -7,18 +7,33 @@
         <div class="card-body">
             <form action="{{ url_for('create_user') }}" method="POST">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
                 <div class="form-group">
                     <label for="usuario">Nombre de Usuario</label>
                     <input type="text" name="usuario" class="form-control" id="usuario" required>
                 </div>
+
                 <div class="form-group">
                     <label for="contrasena">Contraseña</label>
                     <input type="password" name="contrasena" class="form-control" id="contrasena" required>
                 </div>
+
                 <div class="form-group">
                     <label for="nombre_completo">Nombre Completo</label>
                     <input type="text" name="nombre_completo" class="form-control" id="nombre_completo" required>
-                </div>              
+                </div>
+
+                <div class="form-group">
+                    <label for="rol">Rol</label>
+                    <select name="rol" class="form-control" id="rol" required>
+                        <option value="administrador">Administrador</option>
+                        <option value="docente">Docente</option>
+                        <option value="estudiante">Estudiante</option>
+                    </select>
+                </div>
+
+                <!-- No se muestra el campo de 'estado' en el formulario ya que es fijo a 'activo' -->
+                
                 <button type="submit" class="btn btn-primary">Crear Usuario</button>
                 <a href="{{ url_for('users') }}" class="btn btn-secondary">Cancelar</a>
             </form>
