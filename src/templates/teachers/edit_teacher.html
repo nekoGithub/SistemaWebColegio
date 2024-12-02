@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mt-4">Editar Docente</h2>
+    <div class="card">
+        <div class="card-body">
+            <form action="{{ url_for('edit_teacher', teacher_id=teacher.id) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="form-group">
+                    <label for="nombres">Nombres</label>
+                    <input type="text" name="nombres" class="form-control" id="nombres" value="{{ teacher.nombres }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="apellidos">Apellidos</label>
+                    <input type="text" name="apellidos" class="form-control" id="apellidos" value="{{ teacher.apellidos }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="sexo">Sexo</label>
+                    <select name="sexo" class="form-control" id="sexo" required>
+                        <option value="masculino" {% if teacher.sexo == 'masculino' %}selected{% endif %}>Masculino</option>
+                        <option value="femenino" {% if teacher.sexo == 'femenino' %}selected{% endif %}>Femenino</option>                        
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="ci">Carnet de Identidad</label>
+                    <input type="text" name="ci" class="form-control" id="ci" value="{{ teacher.ci }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="num_celular">Número de Celular</label>
+                    <input type="text" name="num_celular" class="form-control" id="num_celular" value="{{ teacher.num_celular }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="fecha_ingreso">Fecha de Ingreso</label>
+                    <input type="date" name="fecha_ingreso" class="form-control" id="fecha_ingreso" value="{{ teacher.fecha_ingreso }}" required>
+                </div>
+                
+                <input type="hidden" name="estado" value="{{ teacher.estado }}">
+
+                <button type="submit" class="btn btn-primary">Actualizar Profesor</button>
+                <a href="{{ url_for('teachers') }}" class="btn btn-secondary">Cancelar</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

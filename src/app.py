@@ -1,16 +1,19 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_mysqldb import MySQL
 from flask_wtf.csrf import CSRFProtect
-from flask_login import LoginManager, login_user, logout_user, login_required
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash
+from datetime import datetime
 
 from config import config
 
 # Models:
 from models.ModelUser import ModelUser
+from models.ModelTeacher import ModelTeacher
 
 # Entities:
 from models.entities.User import User
+from models.entities.Teacher import Teacher
 
 app = Flask(__name__)
 
@@ -74,8 +77,7 @@ def create_user():
         rol = request.form['rol']  # Campo para el rol
 
         print(f"Datos recibidos: {usuario}, {contrasena}, {nombre_completo}, {rol}")
-        
-        # El estado se deja por defecto como "activo" y rol se pasa desde el formulario
+                
         user = User(0, usuario, contrasena, nombre_completo=nombre_completo, rol=rol, estado="activo")
         
         if ModelUser.create_user(db, user):
@@ -96,15 +98,13 @@ def edit_user(user_id):
         usuario = request.form['usuario']
         contrasena = request.form['contrasena']
         nombre_completo = request.form['nombre_completo']
-        rol = request.form['rol']  # El rol sí puede ser editado
-        
-        # Si se proporciona una nueva contraseña, se encripta, de lo contrario se mantiene la actual
+        rol = request.form['rol'] 
+                
         if contrasena:
             contrasena_encriptada = generate_password_hash(contrasena)
         else:
             contrasena_encriptada = user.contrasena
-        
-        # El estado no se edita y se mantiene igual, lo mismo con el campo updated_at (debería actualizarse automáticamente)
+                
         updated_user = User(user.id, usuario, contrasena_encriptada, nombre_completo, rol=rol, estado=user.estado)
 
         if ModelUser.update_user(db, updated_user):
@@ -120,9 +120,8 @@ def edit_user(user_id):
 @app.route('/delete_user/<int:user_id>', methods=['POST'])
 def delete_user(user_id):
     try:
-        user = ModelUser.get_by_id(db, user_id)  # Obtener el usuario por ID
-        if user:
-            # Eliminar el usuario de la base de datos
+        user = ModelUser.get_by_id(db, user_id)  
+        if user:            
             ModelUser.delete_user(db, user_id)
             flash("Usuario eliminado exitosamente.", 'success')
         else:
@@ -131,6 +130,86 @@ def delete_user(user_id):
         flash(f"Ocurrió un error: {ex}", 'danger')
     return redirect(url_for('users'))
 
+# Crud teacher
+@app.route('/teachers')
+def teachers():
+    try:
+        teachers = ModelTeacher.get_all_teachers(db)  
+        return render_template('teachers/teachers.html', teachers=teachers)
+    except Exception as ex:
+        flash("Ocurrió un error al recuperar los profesores.")
+        return redirect(url_for('home'))
+
+@app.route('/create_teacher', methods=['GET', 'POST'])
+def create_teacher():
+    if request.method == 'POST':
+        nombres = request.form['nombres']
+        apellidos = request.form['apellidos']
+        sexo = request.form['sexo']
+        ci = request.form['ci']
+        num_celular = request.form['num_celular']
+        fecha_ingreso = request.form['fecha_ingreso']  # Puede ser una fecha tipo string que luego convertimos
+        estado = request.form.get('estado', 'activo')  # El estado por defecto es 'activo'
+        id_user = current_user.id 
+        
+        # Convertir fecha_ingreso a formato de fecha si es necesario
+        fecha_ingreso = datetime.strptime(fecha_ingreso, '%Y-%m-%d')
+        
+        # Crear una instancia del profesor
+        teacher = Teacher(0, nombres, apellidos, sexo, ci, num_celular, fecha_ingreso, estado, id_user)
+
+        if ModelTeacher.create_teacher(db, teacher):
+            flash('Profesor creado exitosamente.', 'success')
+            return redirect(url_for('teachers'))
+        else:
+            flash('Error al crear el profesor.', 'danger')
+    
+    return render_template('teachers/create_teacher.html')
+
+@app.route('/edit_teacher/<int:teacher_id>', methods=['GET', 'POST'])
+def edit_teacher(teacher_id):
+    teacher = ModelTeacher.get_by_id(db, teacher_id)  # Obtener el profesor desde la base de datos
+    
+    if request.method == 'POST':
+        nombres = request.form['nombres']
+        apellidos = request.form['apellidos']
+        sexo = request.form['sexo']
+        ci = request.form['ci']
+        num_celular = request.form['num_celular']
+        fecha_ingreso = request.form['fecha_ingreso']
+        estado = request.form.get('estado', 'activo')
+        id_user = current_user.id 
+
+        # Convertir la fecha si es necesario
+        fecha_ingreso = datetime.strptime(fecha_ingreso, '%Y-%m-%d')
+
+        # Actualizar los datos del profesor
+        updated_teacher = Teacher(teacher.id, nombres, apellidos, sexo, ci, num_celular, fecha_ingreso, estado, id_user, teacher.create_at, datetime.now())
+
+        if ModelTeacher.update_teacher(db, updated_teacher):
+            flash('Profesor actualizado exitosamente.', 'success')
+            return redirect(url_for('teachers'))
+        else:
+            flash('Error al actualizar el profesor.', 'danger')
+            return redirect(url_for('edit_teacher', teacher_id=teacher.id))
+
+    return render_template('teachers/edit_teacher.html', teacher=teacher)
+
+@app.route('/delete_teacher/<int:teacher_id>', methods=['POST'])
+def delete_teacher(teacher_id):
+    try:
+        teacher = ModelTeacher.get_by_id(db, teacher_id)  # Obtener el profesor por ID
+        if teacher:
+            # Eliminar el profesor de la base de datos
+            ModelTeacher.delete_teacher(db, teacher_id)
+            flash("Profesor eliminado exitosamente.", 'success')
+        else:
+            flash("Profesor no encontrado.", 'danger')
+    except Exception as ex:
+        flash(f"Ocurrió un error: {ex}", 'danger')
+    return redirect(url_for('teachers'))
+
+# Reportes
 @app.route('/report_users')
 def report_users():    
     users = ModelUser.get_all_users(db)    
