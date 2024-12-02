@@ -1,6 +1,7 @@
 # Ignora el entorno virtual
 venv/
 env/
+dnksalndklsa
 
 # Ignora archivos de base de datos locales
 *.sqlite

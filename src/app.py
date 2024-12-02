@@ -10,10 +10,12 @@ from config import config
 # Models:
 from models.ModelUser import ModelUser
 from models.ModelTeacher import ModelTeacher
+from models.ModelGrade import ModelGrade
 
 # Entities:
 from models.entities.User import User
 from models.entities.Teacher import Teacher
+from models.entities.Grade import Grade
 
 app = Flask(__name__)
 
@@ -148,14 +150,12 @@ def create_teacher():
         sexo = request.form['sexo']
         ci = request.form['ci']
         num_celular = request.form['num_celular']
-        fecha_ingreso = request.form['fecha_ingreso']  # Puede ser una fecha tipo string que luego convertimos
-        estado = request.form.get('estado', 'activo')  # El estado por defecto es 'activo'
+        fecha_ingreso = request.form['fecha_ingreso']  
+        estado = request.form.get('estado', 'activo')  
         id_user = current_user.id 
-        
-        # Convertir fecha_ingreso a formato de fecha si es necesario
+                
         fecha_ingreso = datetime.strptime(fecha_ingreso, '%Y-%m-%d')
-        
-        # Crear una instancia del profesor
+                
         teacher = Teacher(0, nombres, apellidos, sexo, ci, num_celular, fecha_ingreso, estado, id_user)
 
         if ModelTeacher.create_teacher(db, teacher):
@@ -179,11 +179,9 @@ def edit_teacher(teacher_id):
         fecha_ingreso = request.form['fecha_ingreso']
         estado = request.form.get('estado', 'activo')
         id_user = current_user.id 
-
-        # Convertir la fecha si es necesario
+        
         fecha_ingreso = datetime.strptime(fecha_ingreso, '%Y-%m-%d')
-
-        # Actualizar los datos del profesor
+        
         updated_teacher = Teacher(teacher.id, nombres, apellidos, sexo, ci, num_celular, fecha_ingreso, estado, id_user, teacher.create_at, datetime.now())
 
         if ModelTeacher.update_teacher(db, updated_teacher):
@@ -198,9 +196,8 @@ def edit_teacher(teacher_id):
 @app.route('/delete_teacher/<int:teacher_id>', methods=['POST'])
 def delete_teacher(teacher_id):
     try:
-        teacher = ModelTeacher.get_by_id(db, teacher_id)  # Obtener el profesor por ID
-        if teacher:
-            # Eliminar el profesor de la base de datos
+        teacher = ModelTeacher.get_by_id(db, teacher_id) 
+        if teacher:            
             ModelTeacher.delete_teacher(db, teacher_id)
             flash("Profesor eliminado exitosamente.", 'success')
         else:
@@ -208,6 +205,64 @@ def delete_teacher(teacher_id):
     except Exception as ex:
         flash(f"Ocurrió un error: {ex}", 'danger')
     return redirect(url_for('teachers'))
+
+# Crud courses - grades
+@app.route('/grades')
+def grades():
+    try:
+        grades = ModelGrade.get_all_grades(db)  
+        return render_template('courses/grades.html', grades=grades)
+    except Exception as ex:
+        flash("Ocurrió un error al recuperar los grados.")
+        return redirect(url_for('home'))
+    
+@app.route('/create_grade', methods=['GET', 'POST'])
+def create_grade():
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        ciclo = request.form['ciclo']       
+                
+        grade = Grade(0, nombre, ciclo)
+
+        if ModelGrade.create_grade(db, grade):
+            flash('Grade creado exitosamente.', 'success')
+            return redirect(url_for('grades'))
+        else:
+            flash('Error al crear el Grade.', 'danger')
+    
+    return render_template('courses/create_grade.html')
+
+@app.route('/edit_grade/<int:grade_id>', methods=['GET', 'POST'])
+def edit_grade(grade_id):
+    grade = ModelGrade.get_by_id(db, grade_id)  
+    
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        ciclo = request.form['ciclo']
+ 
+        updated_grade = Grade(grade.id, nombre, ciclo)
+
+        if ModelGrade.update_grade(db, updated_grade):
+            flash('Grado actualizado exitosamente.', 'success')
+            return redirect(url_for('grades'))
+        else:
+            flash('Error al actualizar el profesor.', 'danger')
+            return redirect(url_for('edit_grade', grade_id=grade.id))
+
+    return render_template('courses/edit_grade.html', grade=grade)
+
+@app.route('/delete_grade/<int:grade_id>', methods=['POST'])
+def delete_grade(grade_id):
+    try:
+        grade = ModelGrade.get_by_id(db, grade_id) 
+        if grade:            
+            ModelGrade.delete_grade(db, grade_id)
+            flash("Grado eliminado exitosamente.", 'success')
+        else:
+            flash("Grado no encontrado.", 'danger')
+    except Exception as ex:
+        flash(f"Ocurrió un error: {ex}", 'danger')
+    return redirect(url_for('grades'))
 
 # Reportes
 @app.route('/report_users')
