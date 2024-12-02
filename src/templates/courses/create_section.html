@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mt-4">Crear Nueva Seccion</h2>
+    <div class="card">
+        <div class="card-body">
+            <form action="{{ url_for('create_section') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="form-group">
+                    <label for="nombre">Nombre</label>
+                    <input type="text" name="nombre" class="form-control" id="nombre" required
+                         maxlength="1" >
+                    <small id="nombreHelp" class="form-text text-muted"></small>
+                </div>
+
+                <div class="form-group">
+                    <label for="id_grado">Grado</label>
+                    <select class="form-control" id="id_grado" name="id_grado" required>
+                      <option value="" disabled selected>Seleccione un grado</option>
+                      {% for grado in grados %}
+                      <option value="{{ grado[0] }}">{{ grado[1] }} - {{ grado[2] }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+
+                <button type="submit" class="btn btn-primary">Crear Seccion</button>
+                <a href="{{ url_for('sections') }}" class="btn btn-secondary">Cancelar</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block script %}
+<script>
+    const nombreInput = document.getElementById('nombre');
+    const nombreHelp = document.getElementById('nombreHelp');
+
+    nombreInput.addEventListener('input', () => {
+        nombreInput.value = nombreInput.value.toUpperCase();                
+
+        if (!/^[A-Za-z]?$/.test(nombreInput.value)) {
+            nombreHelp.textContent = 'Solo puede ingresar una letra.';
+            nombreInput.value = value.slice(0, 1); 
+        } else {
+            nombreHelp.textContent = ''; 
+        }
+    });
+</script>
+{% endblock %}

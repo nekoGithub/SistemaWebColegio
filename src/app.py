@@ -11,11 +11,13 @@ from config import config
 from models.ModelUser import ModelUser
 from models.ModelTeacher import ModelTeacher
 from models.ModelGrade import ModelGrade
+from models.ModelSection import ModelSection
 
 # Entities:
 from models.entities.User import User
 from models.entities.Teacher import Teacher
 from models.entities.Grade import Grade
+from models.entities.Section import Section
 
 app = Flask(__name__)
 
@@ -263,6 +265,65 @@ def delete_grade(grade_id):
     except Exception as ex:
         flash(f"Ocurrió un error: {ex}", 'danger')
     return redirect(url_for('grades'))
+
+# Crud courses - sections
+@app.route('/sections')
+def sections():
+    try:
+        sections = ModelSection.get_all_sections(db)  
+        return render_template('courses/sections.html', sections=sections)
+    except Exception as ex:
+        flash("Ocurrió un error al recuperar los secciones.")
+        return redirect(url_for('home'))
+    
+@app.route('/create_section', methods=['GET', 'POST'])
+def create_section():
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        id_grado = request.form['id_grado']       
+                
+        section = Section(0, nombre, id_grado)
+
+        if ModelSection.create_section(db, section):
+            flash('Seccion creado exitosamente.', 'success')
+            return redirect(url_for('sections'))
+        else:
+            flash('Error al crear el Grade.', 'danger')
+
+    grados = ModelGrade.get_all_grades(db)
+    return render_template('courses/create_section.html', grados=grados)
+
+@app.route('/edit_section/<int:section_id>', methods=['GET', 'POST'])
+def edit_section(section_id):
+    section = ModelSection.get_by_id(db, section_id)      
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        id_grado = request.form['id_grado']
+ 
+        updated_section = Section(section.id, nombre, id_grado)
+
+        if ModelSection.update_section(db, updated_section):
+            flash('Seccion actualizado exitosamente.', 'success')
+            return redirect(url_for('sections'))
+        else:
+            flash('Error al actualizar el Seccion.', 'danger')
+            return redirect(url_for('edit_section', section_id=section.id))
+
+    grados = ModelGrade.get_all_grades(db)
+    return render_template('courses/edit_section.html', section=section, grados=grados)
+
+@app.route('/delete_section/<int:section_id>', methods=['POST'])
+def delete_section(section_id):
+    try:
+        section = ModelSection.get_by_id(db, section_id) 
+        if section:            
+            ModelSection.delete_section(db, section_id)
+            flash("Seccion eliminado exitosamente.", 'success')
+        else:
+            flash("Seccion no encontrado.", 'danger')
+    except Exception as ex:
+        flash(f"Ocurrió un error: {ex}", 'danger')
+    return redirect(url_for('sections'))
 
 # Reportes
 @app.route('/report_users')

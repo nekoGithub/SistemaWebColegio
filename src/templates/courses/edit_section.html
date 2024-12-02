@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mt-4">Editar Seccion</h2>
+    <div class="card">
+        <div class="card-body">
+            <form action="{{ url_for('edit_section', section_id=section.id) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="form-group">
+                    <label for="nombre">Nombre</label>
+                    <input type="text" name="nombre" class="form-control" id="nombre" value="{{ section.nombre }}" required maxlength="1">
+                    <small id="nombreHelp" class="form-text text-muted"></small>
+                </div>
+
+                <div class="form-group">
+                    <label for="id_grado">Grado</label>
+                    <select class="form-control" name="id_grado" id="id_grado" required>
+                        <!-- Aquí seleccionamos el grado actual que tiene la sección -->
+                        <option value="{{ section.id_grado }}" selected>{{ section.grado_nombre }} - {{ section.grado_ciclo }}</option>
+                        {% for grado in grados %}
+                            {% if grado[0] != section.id_grado %}
+                            <option value="{{ grado[0] }}">{{ grado[1] }} - {{ grado[2] }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                
+
+                <button type="submit" class="btn btn-primary">Actualizar Seccion</button>
+                <a href="{{ url_for('sections') }}" class="btn btn-secondary">Cancelar</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block script %}
+<script>
+    const nombreInput = document.getElementById('nombre');
+    const nombreHelp = document.getElementById('nombreHelp');
+
+    nombreInput.addEventListener('input', () => {
+        nombreInput.value = nombreInput.value.toUpperCase();                
+
+        if (!/^[A-Za-z]?$/.test(nombreInput.value)) {
+            nombreHelp.textContent = 'Solo puede ingresar una letra.';
+            nombreInput.value = value.slice(0, 1); 
+        } else {
+            nombreHelp.textContent = ''; 
+        }
+    });
+</script>
+{% endblock %}
