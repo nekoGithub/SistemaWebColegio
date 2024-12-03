@@ -12,12 +12,14 @@ from models.ModelUser import ModelUser
 from models.ModelTeacher import ModelTeacher
 from models.ModelGrade import ModelGrade
 from models.ModelSection import ModelSection
+from models.ModelSubject import ModelSubject
 
 # Entities:
 from models.entities.User import User
 from models.entities.Teacher import Teacher
 from models.entities.Grade import Grade
 from models.entities.Section import Section
+from models.entities.Subject import Subject
 
 app = Flask(__name__)
 
@@ -324,6 +326,65 @@ def delete_section(section_id):
     except Exception as ex:
         flash(f"Ocurrió un error: {ex}", 'danger')
     return redirect(url_for('sections'))
+
+# Crud courses - subjects
+@app.route('/subjects')
+def subjects():
+    try:
+        subjects = ModelSubject.get_all_subjects(db)  
+        return render_template('courses/subjects.html', subjects=subjects)
+    except Exception as ex:
+        flash("Ocurrió un error al recuperar los secciones.")
+        return redirect(url_for('home'))
+
+@app.route('/create_subject', methods=['GET', 'POST'])
+def create_subject():
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        id_grado = request.form['id_grado']       
+                
+        subject = Subject(0, nombre, id_grado)
+
+        if ModelSubject.create_subject(db, subject):
+            flash('Materia creado exitosamente.', 'success')
+            return redirect(url_for('subjects'))
+        else:
+            flash('Error al crear el Materia.', 'danger')
+
+    grados = ModelGrade.get_all_grades(db)
+    return render_template('courses/create_subject.html', grados=grados)
+
+@app.route('/edit_subject/<int:subject_id>', methods=['GET', 'POST'])
+def edit_subject(subject_id):
+    subject = ModelSubject.get_by_id(db, subject_id)      
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        id_grado = request.form['id_grado']
+ 
+        update_subject = Subject(subject.id, nombre, id_grado)
+
+        if ModelSubject.update_subject(db, update_subject):
+            flash('Materia actualizado exitosamente.', 'success')
+            return redirect(url_for('subjects'))
+        else:
+            flash('Error al actualizar el Materia.', 'danger')
+            return redirect(url_for('edit_subject', subject_id=subject.id))
+
+    grados = ModelGrade.get_all_grades(db)
+    return render_template('courses/edit_subject.html', subject=subject, grados=grados)
+
+@app.route('/delete_subject/<int:subject_id>', methods=['POST'])
+def delete_subject(subject_id):
+    try:
+        subject = ModelSubject.get_by_id(db, subject_id) 
+        if subject:            
+            ModelSubject.delete_subject(db, subject_id)
+            flash("Materia eliminado exitosamente.", 'success')
+        else:
+            flash("Materia no encontrado.", 'danger')
+    except Exception as ex:
+        flash(f"Ocurrió un error: {ex}", 'danger')
+    return redirect(url_for('subjects'))
 
 # Reportes
 @app.route('/report_users')

@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mt-4">Crear Nueva Materia</h2>
+    <div class="card">
+        <div class="card-body">
+            <form action="{{ url_for('create_subject') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="form-group">
+                    <label for="nombre">Nombre</label>
+                    <input type="text" name="nombre" class="form-control" id="nombre" required>                    
+                </div>
+
+                <div class="form-group">
+                    <label for="id_grado">Grado</label>
+                    <select class="form-control" id="id_grado" name="id_grado" required>
+                      <option value="" disabled selected>Seleccione un grado</option>
+                      {% for grado in grados %}
+                      <option value="{{ grado[0] }}">{{ grado[1] }} - {{ grado[2] }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+
+                <button type="submit" class="btn btn-primary">Crear Materia</button>
+                <a href="{{ url_for('subjects') }}" class="btn btn-secondary">Cancelar</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block script %}
+
+{% endblock %}
