@@ -77,3 +77,27 @@ class ModelSubject:
             return Subject(result[0], result[1], result[2], result[3], result[4])
         return None
 
+    @staticmethod
+    def get_subjects_by_grade(db, grade_id):
+        # Consulta para obtener las materias de un grado
+        query = """
+            SELECT s.id, s.name
+            FROM subjects s
+            WHERE s.grade_id = %s
+        """
+        result = db.session.execute(query, (grade_id,))
+        return result.fetchall()
+
+
+    @staticmethod
+    def get_subjects_by_grade(db, grade_id):
+        try:
+            cursor = db.connection.cursor()
+            query = "SELECT id, nombre FROM subjects WHERE id_grado = %s"
+            cursor.execute(query, (grade_id,))
+            subjects = cursor.fetchall()
+            cursor.close()
+            return [{'id': row[0], 'name': row[1]} for row in subjects]
+        except Exception as ex:
+            print(f"Error al obtener las materias: {ex}")
+            return []

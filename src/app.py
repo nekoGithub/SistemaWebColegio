@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_mysqldb import MySQL
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
@@ -13,6 +13,7 @@ from models.ModelTeacher import ModelTeacher
 from models.ModelGrade import ModelGrade
 from models.ModelSection import ModelSection
 from models.ModelSubject import ModelSubject
+from models.ModelSubjectTeacher import ModelSubjectTeacher
 
 # Entities:
 from models.entities.User import User
@@ -20,6 +21,7 @@ from models.entities.Teacher import Teacher
 from models.entities.Grade import Grade
 from models.entities.Section import Section
 from models.entities.Subject import Subject
+from models.entities.SubjectTeacher import SubjectTeacher
 
 app = Flask(__name__)
 
@@ -148,27 +150,67 @@ def teachers():
 
 @app.route('/create_teacher', methods=['GET', 'POST'])
 def create_teacher():
-    if request.method == 'POST':
+    if request.method == 'POST':        
         nombres = request.form['nombres']
         apellidos = request.form['apellidos']
         sexo = request.form['sexo']
         ci = request.form['ci']
         num_celular = request.form['num_celular']
-        fecha_ingreso = request.form['fecha_ingreso']  
-        estado = request.form.get('estado', 'activo')  
+        fecha_ingreso = request.form['fecha_ingreso']        
+        materias = request.form.getlist('subjects[]')
+        
+        estado = 'activo'
         id_user = current_user.id 
-                
+        
         fecha_ingreso = datetime.strptime(fecha_ingreso, '%Y-%m-%d')
                 
         teacher = Teacher(0, nombres, apellidos, sexo, ci, num_celular, fecha_ingreso, estado, id_user)
+                
+        teacher_id = ModelTeacher.create_teacher(db, teacher)
+        
+        if teacher_id:                                                
+            if materias:
+                cursor = db.connection.cursor()
+                for subject_id in materias:
+                    query_subject_teacher = """
+                        INSERT INTO subject_teacher (id_teacher, id_subject)
+                        VALUES (%s, %s)
+                    """
+                    cursor.execute(query_subject_teacher, (teacher_id, subject_id))
+                db.connection.commit()                
+            else:
+                print('No se seleccionaron materias.', 'warning')
 
-        if ModelTeacher.create_teacher(db, teacher):
-            flash('Profesor creado exitosamente.', 'success')
             return redirect(url_for('teachers'))
         else:
-            flash('Error al crear el profesor.', 'danger')
-    
-    return render_template('teachers/create_teacher.html')
+            flash('Error al crear el Docente.', 'danger')
+             
+    grados = ModelGrade.get_all_grades(db)
+    return render_template('teachers/create_teacher.html', grados=grados)
+
+
+
+
+@app.route('/get_subjects_by_grade', methods=['GET'])
+def get_subjects_by_grade():
+    grade_id = request.args.get('grade_id')
+    if not grade_id:
+        return jsonify({'error': 'El ID del grado no fue proporcionado.'}), 400
+
+    try:
+        subjects = ModelSubject.get_subjects_by_grade(db, grade_id)
+        if subjects:
+            return jsonify(subjects)
+        else:
+            return jsonify({'message': 'No se encontraron materias para el grado especificado.'}), 404
+    except Exception as ex:
+        return jsonify({'error': str(ex)}), 400
+
+
+
+
+
+
 
 @app.route('/edit_teacher/<int:teacher_id>', methods=['GET', 'POST'])
 def edit_teacher(teacher_id):
@@ -182,8 +224,7 @@ def edit_teacher(teacher_id):
         num_celular = request.form['num_celular']
         fecha_ingreso = request.form['fecha_ingreso']
         estado = request.form.get('estado', 'activo')
-        id_user = current_user.id 
-        
+        id_user = current_user.id         
         fecha_ingreso = datetime.strptime(fecha_ingreso, '%Y-%m-%d')
         
         updated_teacher = Teacher(teacher.id, nombres, apellidos, sexo, ci, num_celular, fecha_ingreso, estado, id_user, teacher.create_at, datetime.now())
@@ -197,18 +238,93 @@ def edit_teacher(teacher_id):
 
     return render_template('teachers/edit_teacher.html', teacher=teacher)
 
+
+
 @app.route('/delete_teacher/<int:teacher_id>', methods=['POST'])
 def delete_teacher(teacher_id):
     try:
-        teacher = ModelTeacher.get_by_id(db, teacher_id) 
-        if teacher:            
+        teacher = ModelTeacher.get_by_id(db, teacher_id)
+        if teacher:
+            # Primero, eliminar las materias asociadas al docente
+            ModelSubjectTeacher.delete_subjects_by_teacher(db, teacher_id)
+            
+            # Luego, inactivar el docente
             ModelTeacher.delete_teacher(db, teacher_id)
-            flash("Profesor eliminado exitosamente.", 'success')
+            
+            flash("Profesor y sus materias eliminados exitosamente.", 'success')
         else:
             flash("Profesor no encontrado.", 'danger')
     except Exception as ex:
         flash(f"Ocurrió un error: {ex}", 'danger')
     return redirect(url_for('teachers'))
+
+
+
+@app.route('/edit_subject_teacher/<int:teacher_id>', methods=['GET', 'POST'])
+def edit_subject_teacher(teacher_id):
+    teacher = ModelTeacher.get_by_id(db, teacher_id)
+    gradoOld = ModelSubjectTeacher.get_teacher_grade(db, teacher_id)  # Obtener el grado asignado
+    grado_id = gradoOld[0]
+
+    if request.method == 'POST':
+        # Obtener las materias seleccionadas del formulario
+        selected_subjects = request.form.getlist('subjects[]')  # Lista de IDs de materias seleccionadas
+
+        # Convertir a enteros por seguridad
+        selected_subjects = [int(subject_id) for subject_id in selected_subjects]
+
+        # Borrar materias actuales del docente
+        ModelSubjectTeacher.delete_by_teacher(db, teacher_id)
+
+        # Insertar los nuevos registros
+        for subject_id in selected_subjects:
+            ModelSubjectTeacher.add_subject_to_teacher(db, teacher_id, subject_id)
+
+        flash("Materias actualizadas con éxito", "success")
+        return redirect(url_for('teachers'))  # Redirigir a la lista de profesores
+
+    grados = ModelGrade.get_all_grades(db)  # Obtener todos los grados disponibles
+    subjects = ModelSubjectTeacher.get_subjects_by_teacher(db, teacher_id)  # Materias actuales
+
+    return render_template(
+        'teachers/edit_subject_teacher.html',
+        teacher=teacher,
+        grados=grados,
+        grado_id=grado_id,  # Pasar el grado al template  
+        subjects=subjects      
+    )
+
+
+@app.route('/get_subjects_by_grade_and_teacher', methods=['GET'])
+def get_subjects_by_grade_and_teacher():
+    try:
+        grade_id = request.args.get('grade_id', type=int)
+        teacher_id = request.args.get('teacher_id', type=int)
+
+        # Depuración: Verificar si los parámetros se recibieron correctamente
+        print(f"Grade ID: {grade_id}, Teacher ID: {teacher_id}")
+        
+        if not grade_id or not teacher_id:
+            return jsonify({"error": "Parámetros inválidos"}), 400
+
+        # Lógica para obtener las materias
+        subjects = ModelSubjectTeacher.get_subjects_by_grade_and_teacher(db, grade_id, teacher_id)
+
+        # Depuración: Verificar el resultado de la consulta
+        print(f"Subjects: {subjects}")
+
+        return jsonify(subjects)
+    except Exception as e:
+        print(f"Error al procesar la solicitud: {e}")
+        return jsonify({"error": "Error al obtener materias"}), 500
+
+
+
+
+
+
+
+
 
 # Crud courses - grades
 @app.route('/grades')
@@ -385,6 +501,35 @@ def delete_subject(subject_id):
     except Exception as ex:
         flash(f"Ocurrió un error: {ex}", 'danger')
     return redirect(url_for('subjects'))
+
+# Crud Asignacion de materia a cada profesor
+@app.route('/subject_teacher')
+def subject_teacher():
+    try:
+        subject_teacher = ModelSubjectTeacher.get_all_assignments(db)  
+        return render_template('subject_teacher/subject_teacher.html', subject_teacher=subject_teacher)
+    except Exception as ex:
+        flash("Ocurrió un error al recuperar los Asignaciones.")
+        return redirect(url_for('home'))
+    
+@app.route('/create_subject_teacher', methods=['GET', 'POST'])
+def create_subject_teacher():
+    if request.method == 'POST':
+        id_teacher = request.form['id_teacher']
+        id_subject = request.form['id_subject']       
+                
+        subjectTeacher = Subject(0, id_teacher, id_subject)
+
+        if ModelSubject.create_subject(db, subjectTeacher):
+            flash('Asinado correctamente.', 'success')
+            return redirect(url_for('subject_teacher'))
+        else:
+            flash('Error al crear la asignacion.', 'danger')
+
+    grados = ModelGrade.get_all_grades(db)
+    
+    return render_template('courses/create_subject.html', grados=grados)
+
 
 # Reportes
 @app.route('/report_users')

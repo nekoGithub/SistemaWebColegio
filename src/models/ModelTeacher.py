@@ -19,11 +19,13 @@ class ModelTeacher:
                 teacher.id_user 
             ))
             db.connection.commit()
-            return True
+            # Obtener el id del último registro insertado
+            teacher_id = cursor.lastrowid  # Esto devuelve el ID del nuevo registro
+            return teacher_id  # Retornamos el ID para usarlo fuera de la función
         except Exception as ex:
             print(f"Error: {ex}")
             return False
-
+    
     @classmethod
     def update_teacher(cls, db, teacher):
         try:                   
@@ -86,3 +88,25 @@ class ModelTeacher:
         except Exception as ex:
             raise Exception(f"Error al obtener usuario por ID: {ex}")
 
+    @staticmethod
+    def get_subjects_by_teacher(db, teacher_id):
+        """
+        Obtiene las materias asociadas a un profesor por su ID.
+
+        :param db: Conexión o sesión de la base de datos.
+        :param teacher_id: ID del profesor.
+        :return: Lista de materias asociadas al profesor.
+        """
+        try:
+            query = """
+                SELECT m.id, m.name 
+                FROM subjects AS m
+                INNER JOIN teacher_subjects AS ts ON ts.subject_id = m.id
+                WHERE ts.teacher_id = :teacher_id
+            """
+            result = db.execute(query, {"teacher_id": teacher_id})
+            subjects = result.fetchall()
+            return subjects
+        except Exception as e:
+            print(f"Error al obtener materias para el profesor con ID {teacher_id}: {e}")
+            return []

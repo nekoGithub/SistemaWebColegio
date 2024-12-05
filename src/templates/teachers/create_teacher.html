@@ -41,10 +41,84 @@
                     <input type="date" name="fecha_ingreso" class="form-control" id="fecha_ingreso" required>
                 </div>
 
+                 <!-- Selección de materias -->
+                 <div class="form-group">
+                    <label for="grado">Grado</label>
+                    <select name="grado" id="grado" class="form-control" required>
+                        <option value="">Seleccione un grado</option>
+                        {% for grado in grados %}
+                            <option value="{{ grado[0] }}">{{ grado[1] }} ({{ grado[2] }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="subjects">Materias</label>
+                    <div id="subjects" class="form-check">
+                        <!-- Materias cargadas aquí -->
+                    </div>
+                </div>
+                
+                <div id="loading" style="display: none;">Cargando materias...</div>
+
                 <button type="submit" class="btn btn-primary">Crear Profesor</button>
                 <a href="{{ url_for('teachers') }}" class="btn btn-secondary">Cancelar</a>
             </form>
         </div>
     </div>
 </div>
+{% endblock %}
+{% block script %}
+<script>
+   document.addEventListener('DOMContentLoaded', function () {
+    const gradoSelect = document.getElementById('grado');  // Asume que este es el select de grados
+    const subjectsDiv = document.getElementById('subjects');
+    const loadingDiv = document.getElementById('loading');
+    
+    gradoSelect.addEventListener('change', function () {
+        const gradeId = gradoSelect.value;
+        
+        if (gradeId) {
+            // Mostrar "Cargando..." mientras obtenemos las materias
+            loadingDiv.style.display = 'block';
+
+            fetch(`/get_subjects_by_grade?grade_id=${gradeId}`)
+                .then(response => response.json())
+                .then(data => {
+                    loadingDiv.style.display = 'none';  // Ocultar "Cargando..."
+
+                    // Limpiar los checkboxes actuales
+                    subjectsDiv.innerHTML = '';
+
+                    // Crear los checkboxes de las materias
+                    data.forEach(subject => {
+                        const label = document.createElement('label');
+                        label.classList.add('form-check-label');
+                        label.textContent = subject.name;
+
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.name = 'subjects[]';  // Nota el uso de 'subjects[]'
+                        checkbox.value = subject.id;
+                        checkbox.classList.add('form-check-input');
+
+                        // Añadir el checkbox y su label al div de materias
+                        const div = document.createElement('div');
+                        div.classList.add('form-check');
+                        div.appendChild(checkbox);
+                        div.appendChild(label);
+                        subjectsDiv.appendChild(div);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error al cargar las materias:', error);
+                    loadingDiv.style.display = 'none';
+                });
+        }
+    });
+});
+
+
+</script>
+
 {% endblock %}

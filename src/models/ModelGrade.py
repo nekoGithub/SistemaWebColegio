@@ -73,3 +73,10 @@ class ModelGrade:
         except Exception as ex:
             raise Exception(f"Error al obtener grado por ID: {ex}")
 
+    @staticmethod
+    def get_subjects_for_grade(grade_id):
+        # Supongamos que existe una relación con el modelo 'Subject' en la base de datos
+        grade = Grade.query.get(grade_id)  # Consulta el grado con el ID proporcionado
+        if grade:
+            return grade.subjects  # Devuelve las materias asociadas a este grado
+        return []
