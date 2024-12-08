@@ -1,0 +1,65 @@
+<!-- templates/teachers.html -->
+{% extends 'base.html' %}
+
+{% block title %}Incripciones{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <h1 class="h3 mb-4 text-gray-800">Incripciones</h1>
+
+  <div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+      <h6 class="m-0 font-weight-bold text-primary">Listado de Incripciones</h6>
+      <a href="{{ url_for('create_inscriptions') }}" class="btn btn-primary btn-sm">
+        <i class="fas fa-plus"></i> Crear nueva inscripcion
+      </a>
+    </div>
+    <div class="card-body">
+      <!-- Tabla con la clase DataTable -->
+      <table id="inscriptionsTable" class="display" cellspacing="0" width="100%">
+        <thead>
+          <tr>
+            <!-- <th>id_student</th>
+            <th>id_grado</th>
+            <th>id_section</th> -->
+            <th>Nombre Tutor</th>            
+            <th>Celular tutor</th>
+            <th>Direccion</th>
+            <th>Estado</th>            
+            <th>Año escolar</th>            
+            <th>Fecha de inscripcion</th>            
+            
+          </tr>
+        </thead>
+        <tbody>
+          {% for inscription in inscriptions %}
+          <tr>
+            <td>{{ inscription[4] }}</td>
+            <td>{{ inscription[5] }}</td>
+            <td>{{ inscription[6] }}</td>
+            <td><span class="badge badge-success">{{ inscription[7] }}</span></td>            
+            <td>{{ inscription[8] }}</td>
+            <td>{{ inscription[9] }}</td>            
+            
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+  $(document).ready(function () {
+    $("#inscriptionsTable").DataTable();
+  });
+
+  $("#inscriptionsTable").DataTable({
+    language: {
+        url: '//cdn.datatables.net/plug-ins/2.1.8/i18n/es-MX.json',
+    },   
+  });
+</script>
+{% endblock %}

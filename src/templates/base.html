@@ -120,7 +120,7 @@
         </div>
         <!-- Nav Item - Charts -->
         <li class="nav-item">
-          <a class="nav-link" href="">
+          <a class="nav-link" href="{{ url_for('students') }}">
             <i class="fas fa-user-graduate"></i>
             <span>Estudiantes</span></a
           >
@@ -133,6 +133,28 @@
           <a class="nav-link" href="{{ url_for('teachers') }}">
             <i class="fas fa-chalkboard-teacher"></i>
             <span>Docentes</span></a
+          >
+        </li>
+
+        <!-- Heading -->
+        <div class="sidebar-heading">
+          Incripciones
+        </div>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('inscriptions') }}">
+            <i class="fas fa-chalkboard-teacher"></i>
+            <span>inscriptions</span></a
+          >
+        </li>
+
+        <!-- Heading -->
+        <div class="sidebar-heading">
+          Notas
+        </div>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('notes') }}">
+            <i class="fas fa-chalkboard-teacher"></i>
+            <span>Notas del estudiante</span></a
           >
         </li>
        

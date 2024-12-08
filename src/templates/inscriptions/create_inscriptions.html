@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mt-4">Inscripcion nuevo</h2>
+    <div class="card">
+        <div class="card-body">
+            <form action="{{ url_for('create_inscriptions') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="form-group">
+                    <label for="ci">Carnet de Identidad (CI):</label>
+                    <input type="text" name="ci" class="form-control" id="ci" placeholder="Ingrese el CI del estudiante" required>
+                </div>
+                <div class="form-group">
+                    <label for="nombres">Nombres:</label>
+                    <input type="text" name="nombres" class="form-control" id="nombres" disabled>
+                </div>
+                <div class="form-group">
+                    <label for="apellidos">Apellidos:</label>
+                    <input type="text" name="apellidos" class="form-control" id="apellidos" disabled>
+                </div>
+
+                <div class="form-group">
+                    <label for="id_grado">Grado</label>
+                    <select name="id_grado" id="id_grado" class="form-control" required>
+                        <option value="">Seleccione un grado</option>
+                        {% for grado in grados %}
+                            <option value="{{ grado[0] }}">{{ grado[1] }} ({{ grado[2] }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="id_section">Sección</label>
+                    <select name="id_section" id="id_section" class="form-control" required>
+                        <option value="">Seleccione una sección</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="nombre_tutor">Nombre tutor:</label>
+                    <input type="text" name="nombre_tutor" class="form-control" id="nombre_tutor" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="celular_tutor">Celular tutor:</label>
+                    <input type="text" name="celular_tutor" class="form-control" id="celular_tutor" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="direccion_estudiante">Direccion estudiante:</label>
+                    <input type="text" name="direccion_estudiante" class="form-control" id="direccion_estudiante" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Crear Estudiante</button>
+                <a href="{{ url_for('create_inscriptions') }}" class="btn btn-secondary">Cancelar</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block script %}
+<script>
+  document.getElementById('ci').addEventListener('input', function () {
+    const ci = this.value;
+    if (ci.length > 3) { // Espera a que se ingresen al menos 4 caracteres
+        fetch(`/buscar-estudiante?ci=${ci}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.encontrado) {
+                    document.getElementById('nombres').value = data.nombres;
+                    document.getElementById('apellidos').value = data.apellidos;
+                } else {
+                    document.getElementById('nombres').value = '';
+                    document.getElementById('apellidos').value = '';
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+});
+
+
+
+document.getElementById('id_grado').addEventListener('change', function() {
+        const gradoId = this.value;
+        const seccionSelect = document.getElementById('id_section');
+        
+        // Limpiar opciones anteriores
+        seccionSelect.innerHTML = '<option value="">Seleccione una sección</option>';
+        
+        if (gradoId) {
+            // Hacer la solicitud AJAX para obtener las secciones
+            fetch(`/get_sections/${gradoId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert('Error: ' + data.error);
+                    } else {
+                        // Agregar las opciones al select de secciones
+                        data.forEach(section => {
+                            const option = document.createElement('option');
+                            option.value = section.id;
+                            option.textContent = section.nombre;
+                            seccionSelect.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    });
+
+</script>
+{% endblock %}

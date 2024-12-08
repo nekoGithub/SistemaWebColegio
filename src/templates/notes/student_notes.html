@@ -1,0 +1,71 @@
+<!-- templates/teachers.html -->
+{% extends 'base.html' %}
+
+{% block title %}Notas{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <h1 class="h3 mb-4 text-gray-800">Notas</h1>
+
+  <div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+      <h6 class="m-0 font-weight-bold text-primary">Listado de Notas</h6>      
+    </div>
+    <div class="card-body">
+      <!-- Tabla con la clase DataTable -->
+      <table id="noteTable" class="display" cellspacing="0" width="100%">
+        <thead>
+          <tr>
+            <th>id</th>
+            <th>Nombre Estudiante</th>
+            <th>Grado</th>
+            <th>Sección</th>
+            <th>Materia</th>
+            <th>Nota 1</th>
+            <th>Nota 2</th>
+            <th>Nota 3</th>
+            <th>Nota 4</th>
+            <th>Promedio</th>
+            <th>Observaciones</th>            
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for note in notes %}
+          <tr>            
+            <td>{{ note[0] }}</td>
+            <td>{{ note[1] }}</td>
+            <td>{{ note[2] }}</td>
+            <td>{{ note[3] }}</td>
+            <td>{{ note[4] }}</td>            
+            <td>{{ note[5] }}</td>            
+            <td>{{ note[6] }}</td>            
+            <td>{{ note[7] }}</td>                        
+            <td>{{ note[8] }}</td>                        
+            <td>{{ note[9] }}</td>                        
+            <td>{{ note[10] }}</td>                        
+            <td>
+                <a href="{{ url_for('edit_student_note', id=note[0]) }}" class="btn btn-dark">Notas</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+  $(document).ready(function () {
+    $("#noteTable").DataTable();
+  });
+
+  $("#noteTable").DataTable({
+    language: {
+        url: '//cdn.datatables.net/plug-ins/2.1.8/i18n/es-MX.json',
+    },   
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mt-4">Asignar notas</h2>
+    <div class="card">
+        <div class="card-body">
+            <form action="{{ url_for('edit_student_note', id=student_note[0]) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="form-group">
+                    <label>Nombre</label>
+                    <input type="text"  class="form-control"  value="{{ student_note[1] }}" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Materia</label>
+                    <input type="text"  class="form-control"  value="{{ student_note[2] }}" disabled>
+                </div>
+                <div class="form-group">
+                    <label for="nota1" class="form-label">Nota 1:</label>
+                    <input type="number" name="nota1" class="form-control" id="nota1" 
+                        value="{{ student_note[3] }}" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="nota2" class="form-label">Nota 2:</label>
+                    <input type="number" name="nota2" class="form-control" id="nota2" 
+                        value="{{ student_note[4] }}" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="nota3" class="form-label">Nota 3:</label>
+                    <input type="number" name="nota3" class="form-control" id="nota3" 
+                        value="{{ student_note[5] }}" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="nota4" class="form-label">Nota 4:</label>
+                    <input type="number" name="nota4" class="form-control" id="nota4" 
+                        value="{{ student_note[6] }}" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="observaciones" class="form-label">Observaciones</label>
+                    <textarea name="observaciones" class="form-control">{{ student_note[7] }}</textarea>
+                </div>
+                
+                
+                <button type="submit" class="btn btn-primary">Actualizar notas</button>
+                <a href="{{ url_for('notes') }}" class="btn btn-secondary">Cancelar</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+
+{% endblock %}

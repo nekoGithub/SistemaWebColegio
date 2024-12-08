@@ -4,6 +4,7 @@ from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash
 from datetime import datetime
+import datetime
 
 from config import config
 
@@ -14,6 +15,8 @@ from models.ModelGrade import ModelGrade
 from models.ModelSection import ModelSection
 from models.ModelSubject import ModelSubject
 from models.ModelSubjectTeacher import ModelSubjectTeacher
+from models.ModelStudent import ModelStudent
+from models.ModelNote import ModelNote
 
 # Entities:
 from models.entities.User import User
@@ -22,6 +25,8 @@ from models.entities.Grade import Grade
 from models.entities.Section import Section
 from models.entities.Subject import Subject
 from models.entities.SubjectTeacher import SubjectTeacher
+from models.entities.Student import Student
+from models.entities.Note import Note
 
 app = Flask(__name__)
 
@@ -318,14 +323,6 @@ def get_subjects_by_grade_and_teacher():
         print(f"Error al procesar la solicitud: {e}")
         return jsonify({"error": "Error al obtener materias"}), 500
 
-
-
-
-
-
-
-
-
 # Crud courses - grades
 @app.route('/grades')
 def grades():
@@ -502,33 +499,305 @@ def delete_subject(subject_id):
         flash(f"Ocurrió un error: {ex}", 'danger')
     return redirect(url_for('subjects'))
 
-# Crud Asignacion de materia a cada profesor
-@app.route('/subject_teacher')
-def subject_teacher():
+# Crud Students
+@app.route('/students')
+def students():
     try:
-        subject_teacher = ModelSubjectTeacher.get_all_assignments(db)  
-        return render_template('subject_teacher/subject_teacher.html', subject_teacher=subject_teacher)
+        students = ModelStudent.get_all_students(db)  
+        return render_template('students/students.html', students=students)
     except Exception as ex:
-        flash("Ocurrió un error al recuperar los Asignaciones.")
+        flash("Ocurrió un error al recuperar Estudiantes.")
         return redirect(url_for('home'))
     
-@app.route('/create_subject_teacher', methods=['GET', 'POST'])
-def create_subject_teacher():
+@app.route('/create_student', methods=['GET', 'POST'])
+def create_student():
     if request.method == 'POST':
-        id_teacher = request.form['id_teacher']
-        id_subject = request.form['id_subject']       
-                
-        subjectTeacher = Subject(0, id_teacher, id_subject)
+        nombres = request.form['nombres']
+        apellidos = request.form['apellidos']       
+        ci = request.form['ci']       
+        genero = request.form['genero']       
+        num_celular = request.form['num_celular']       
+        fecha_nacimiento = request.form['fecha_nacimiento']               
+        fecha_ingreso = request.form['fecha_ingreso']                      
 
-        if ModelSubject.create_subject(db, subjectTeacher):
-            flash('Asinado correctamente.', 'success')
-            return redirect(url_for('subject_teacher'))
+        estado = 'activo'
+        id_user = current_user.id 
+        
+        fecha_ingreso = datetime.datetime.strptime(fecha_ingreso, '%Y-%m-%d')
+
+        student = Student(0, nombres, apellidos, ci, genero, num_celular, fecha_nacimiento, estado, fecha_ingreso, id_user)
+
+        if ModelStudent.create_student(db, student):
+            flash('Estudiante creado exitosamente.', 'success')
+            return redirect(url_for('students'))
         else:
-            flash('Error al crear la asignacion.', 'danger')
-
-    grados = ModelGrade.get_all_grades(db)
+            flash('Error al crear el Estudiante.', 'danger')
     
-    return render_template('courses/create_subject.html', grados=grados)
+    return render_template('students/create_student.html')
+
+@app.route('/edit_student/<int:student_id>', methods=['GET', 'POST'])
+def edit_student(student_id):
+    student = ModelStudent.get_by_id(db, student_id)      
+    if request.method == 'POST':
+        nombres = request.form['nombres']
+        apellidos = request.form['apellidos']       
+        ci = request.form['ci']       
+        genero = request.form['genero']       
+        num_celular = request.form['num_celular']       
+        fecha_nacimiento = request.form['fecha_nacimiento']                               
+        fecha_ingreso = request.form.get('fecha_ingreso', student.fecha_ingreso)  # Usa la existente si no se actualiza
+        estado = request.form.get('estado', student.estado)  # Usa el estado actual si no se cambia
+        id_user = current_user.id         
+
+        update_student = Student(student.id, nombres, apellidos, ci, genero, num_celular, fecha_nacimiento, estado, fecha_ingreso, id_user)
+
+        if ModelStudent.update_student(db, update_student):
+            flash('Estudiante actualizado exitosamente.', 'success')
+            return redirect(url_for('students'))
+        else:
+            flash('Error al actualizar el Estudiante.', 'danger')
+            return redirect(url_for('edit_student', student_id=student.id))
+    
+    return render_template('students/edit_student.html', student=student)
+
+@app.route('/delete_student/<int:student_id>', methods=['POST'])
+def delete_student(student_id):
+    try:
+        student = ModelStudent.get_by_id(db, student_id) 
+        if student:            
+            ModelStudent.delete_student(db, student_id)
+            flash("Estudiante eliminado exitosamente.", 'success')
+        else:
+            flash("Estudiante no encontrado.", 'danger')
+    except Exception as ex:
+        flash(f"Ocurrió un error: {ex}", 'danger')
+    return redirect(url_for('students'))
+
+# Crud Listar inscripciones
+@app.route('/inscriptions')
+def inscriptions():
+    try:
+        cursor = db.connection.cursor()
+
+        cursor.execute("Select * from inscriptions")
+        inscriptions = cursor.fetchall()
+        return render_template('inscriptions/inscriptions.html', inscriptions=inscriptions)
+    except Exception as ex:
+        flash("Ocurrió un error al recuperar Estudiantes.")
+        return redirect(url_for('home'))
+
+
+# Crear inscripciones
+@app.route('/create_inscriptions', methods=['GET', 'POST'])
+def create_inscriptions():
+    if request.method == 'POST':
+        # Obtener los datos del formulario
+        ci = request.form.get('ci')
+        id_grado = request.form['id_grado']
+        id_section = request.form['id_section']        
+        nombre_tutor = request.form['nombre_tutor']
+        celular_tutor = request.form['celular_tutor']
+        direccion_estudiante = request.form['direccion_estudiante']
+        gestion = datetime.datetime.now().year  # O usar un valor dinámico para el año escolar
+        print(gestion)
+
+        try:
+            cursor = db.connection.cursor()
+
+            # Buscar al estudiante por CI
+            cursor.execute("SELECT id FROM students WHERE ci = %s", (ci,))
+            student = cursor.fetchone()
+
+            if student:
+                id_student = student[0]
+                ## print(id_student)
+
+                # Verificar si el estudiante ya está inscrito en la gestión 2024
+                cursor.execute("""
+                    SELECT COUNT(*) FROM inscriptions 
+                    WHERE id_student = %s AND año_escolar = %s
+                """, (id_student, gestion))
+                existing_inscriptions = cursor.fetchone()[0]
+
+                if existing_inscriptions > 0:
+                    flash('El estudiante ya está inscrito en este año escolar.', 'warning')
+                    print('El estudiante ya está inscrito en este año escolar.')
+                else:
+                    # Insertar nueva inscripción
+                    sql = """
+                        INSERT INTO inscriptions 
+                        (id_student, id_grado, id_section, nombre_tutor, celular_tutor, direccion_estudiante, estado, año_escolar, created_at, updated_at)
+                        VALUES (%s, %s, %s, %s, %s, %s, 'activo', %s, NOW(), NOW())
+                    """
+                    values = (id_student, id_grado, id_section, nombre_tutor, celular_tutor, direccion_estudiante, gestion)
+                    cursor.execute(sql, values)
+                    db.connection.commit()
+
+                    # Obtener el id_inscription de la inscripción recién insertada
+                    cursor.execute("SELECT LAST_INSERT_ID()")
+                    id_inscription = cursor.fetchone()[0]
+                    print(f"ID de inscripción (fijo): {id_inscription}")
+
+                    # Obtener las materias del grado
+                    cursor.execute("SELECT id FROM subjects WHERE id_grado = %s", (id_grado,))
+                    subjects = cursor.fetchall()
+                    ## print(subjects)
+                    # Insertar notas para cada materia
+                    for subject in subjects:
+                        id_subject = subject[0]
+                        print("primer ",id_subject)
+                        # Insertar cada materia en la tabla de notas
+                       
+                        # Insertar cada materia en la tabla de notas
+                        insert_notes_sql = """
+                            INSERT INTO stundent_notes 
+                            (id_inscription, id_subject, nota1, nota2, nota3, nota4, promedio, observaciones, created_at, updated_at)
+                            VALUES (%s, %s, 0.00, 0.00, 0.00, 0.00, 0.00, '', NOW(), NOW())
+                        """
+                        cursor.execute(insert_notes_sql, (id_inscription, id_subject))
+                    db.connection.commit()
+
+                    flash('Estudiante inscrito exitosamente.', 'success')
+                    print('Estudiante inscrito exitosamente.')
+            else:
+                flash('Estudiante no encontrado. Verifique el CI.', 'danger')
+
+        except Exception as e:
+            # Manejo de errores
+            db.connection.rollback()
+            flash(f'Error al inscribir al estudiante: {str(e)}', 'danger')
+
+        finally:
+            cursor.close()
+
+        # Redireccionar al formulario para nuevas inscripciones
+        return redirect(url_for('inscriptions'))
+    
+    grados = ModelGrade.get_all_grades(db)
+    # Renderizar el formulario en el método GET
+    return render_template('inscriptions/create_inscriptions.html', grados=grados)
+
+
+
+@app.route('/buscar-estudiante')
+def buscar_estudiante():
+    ci = request.args.get('ci')
+    cursor = db.connection.cursor()
+    cursor.execute("SELECT nombres, apellidos FROM students WHERE ci = %s and estado = 'activo'", (ci,) )
+    student = cursor.fetchone()
+    cursor.close()
+
+    if student:
+        return jsonify({'encontrado': True, 'nombres': student[0], 'apellidos': student[1]})
+    else:
+        return jsonify({'encontrado': False})
+
+@app.route('/get_sections/<int:grado_id>', methods=['GET'])
+def get_sections(grado_id):
+    try:
+        cursor = db.connection.cursor()
+        # Obtener las secciones relacionadas con el grado
+        cursor.execute("SELECT id, nombre FROM sections WHERE id_grado = %s", (grado_id,))
+        sections = cursor.fetchall()
+        cursor.close()
+
+        # Convertir los resultados a un formato JSON
+        sections_list = [{'id': section[0], 'nombre': section[1]} for section in sections]
+        return jsonify(sections_list)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Listar Notas de los estudiantes
+@app.route('/notes')
+def notes():
+    try:
+        cursor = db.connection.cursor()
+        
+        # Ejecutar la consulta SQL para obtener los datos
+        cursor.execute("""
+            SELECT 
+                sn.id,
+                s.nombres AS nombre_estudiante,
+                CONCAT(g.nombre, ' - ', g.ciclo) AS grado,
+                sec.nombre AS seccion,
+                sub.nombre AS materia,
+                sn.nota1, 
+                sn.nota2, 
+                sn.nota3, 
+                sn.nota4, 
+                sn.promedio, 
+                sn.observaciones
+            FROM 
+                stundent_notes sn
+            JOIN inscriptions i ON sn.id_inscription = i.id
+            JOIN students s ON i.id_student = s.id
+            JOIN grados g ON i.id_grado = g.id
+            JOIN sections sec ON i.id_section = sec.id
+            JOIN subjects sub ON sn.id_subject = sub.id
+            WHERE i.año_escolar = %s
+            ORDER BY s.nombres, g.nombre, sec.nombre, sub.nombre
+        """, (2024,))  # Puedes poner el año escolar dinámicamente si lo deseas
+
+        # Obtener todos los resultados
+        notes = cursor.fetchall()
+
+        # Si no hay resultados
+        if not notes:
+            flash("No se encontraron notas para este año escolar.", 'warning')
+
+        return render_template('notes/student_notes.html', notes=notes)
+
+    except Exception as e:
+        flash(f"Error al listar las notas: {str(e)}", 'danger')
+
+    finally:
+        cursor.close()
+
+@app.route('/edit_student_note/<int:id>', methods=['GET', 'POST'])
+def edit_student_note(id):
+    try:
+        cursor = db.connection.cursor()
+        
+        # Obtener la nota específica para editar
+        cursor.execute("""
+            SELECT sn.id, s.nombres AS estudiante, sub.nombre AS materia, 
+                   sn.nota1, sn.nota2, sn.nota3, sn.nota4, sn.observaciones 
+            FROM stundent_notes sn
+            JOIN inscriptions i ON sn.id_inscription = i.id
+            JOIN students s ON i.id_student = s.id
+            JOIN subjects sub ON sn.id_subject = sub.id
+            WHERE sn.id = %s
+        """, (id,))
+        student_note = cursor.fetchone()
+        
+        if request.method == 'POST':
+            # Obtener datos actualizados del formulario
+            nota1 = request.form['nota1']
+            nota2 = request.form['nota2']
+            nota3 = request.form['nota3']
+            nota4 = request.form['nota4']
+            observaciones = request.form['observaciones']
+
+            # Actualizar los datos en la base de datos
+            update_sql = """
+                UPDATE stundent_notes 
+                SET nota1 = %s, nota2 = %s, nota3 = %s, nota4 = %s, observaciones = %s, updated_at = NOW()
+                WHERE id = %s
+            """
+            cursor.execute(update_sql, (nota1, nota2, nota3, nota4, observaciones, id))
+            db.connection.commit()
+            flash('Notas actualizadas con éxito.', 'success')
+            return redirect(url_for('notes'))  # Ruta donde se muestran las notas
+
+        return render_template('notes/edit_student_note.html', student_note=student_note)
+    except Exception as e:
+        db.connection.rollback()
+        flash(f'Error al actualizar las notas: {str(e)}', 'danger')
+    finally:
+        cursor.close()
+
+
+
 
 
 # Reportes

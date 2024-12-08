@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mt-4">Editar Estudiante</h2>
+    <div class="card">
+        <div class="card-body">
+            <form action="{{ url_for('edit_student', student_id=student.id) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="form-group">
+                    <label for="nombres">Nombres</label>
+                    <input type="text" name="nombres" class="form-control" id="nombres" value="{{ student.nombres }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="apellidos">Apellidos</label>
+                    <input type="text" name="apellidos" class="form-control" id="apellidos" value="{{ student.apellidos }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="ci">Cedula de identidad</label>
+                    <input type="text" name="ci" class="form-control" id="ci" value="{{ student.ci }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="genero">Genero</label>
+                    <select name="genero" class="form-control" id="genero" required>
+                        <option value="M" {% if student.genero == 'M' %}selected{% endif %}>Masculino</option>
+                        <option value="F" {% if student.genero == 'F' %}selected{% endif %}>Femenino</option>                        
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="num_celular">Número de Celular</label>
+                    <input type="text" name="num_celular" class="form-control" id="num_celular" value="{{ student.num_celular }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="fecha_nacimiento">Fecha de nacimiento</label>
+                    <input type="date" name="fecha_nacimiento" class="form-control" id="fecha_nacimiento" value="{{ student.fecha_nacimiento }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="fecha_ingreso">Fecha de Ingreso</label>
+                    <input type="date" name="fecha_ingreso" class="form-control" id="fecha_ingreso" value="{{ student.fecha_ingreso }}" required>
+                </div>
+                
+                <input type="hidden" name="estado" value="{{ student.estado }}">
+
+                <button type="submit" class="btn btn-primary">Actualizar Estudiante</button>
+                <a href="{{ url_for('students') }}" class="btn btn-secondary">Cancelar</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
