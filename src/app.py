@@ -1,10 +1,16 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify,send_file
 from flask_mysqldb import MySQL
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash
 from datetime import datetime
 import datetime
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.platypus import Table, TableStyle
+from reportlab.pdfgen import canvas
+from io import BytesIO
+import os
 
 from config import config
 
@@ -51,13 +57,23 @@ def login():
         contrasena = request.form['contrasena']
         user = User(0, usuario, contrasena)  
         logged_user = ModelUser.login(db, user)
-        if logged_user:  
+
+        if logged_user: 
             login_user(logged_user)
-            return redirect(url_for('home'))
+            print(logged_user.rol)            
+            if logged_user.rol == 'administrador':
+                return redirect(url_for('home'))  
+            elif logged_user.rol == 'docente':
+                return redirect(url_for('docente_home'))  
+            else:
+                flash("Rol no reconocido. Contacte al administrador.", 'danger')
+                return redirect(url_for('login'))
+
         else:
-            flash("Usuario o contraseña incorrectos.")
-            return render_template('auth/login.html')  
-    return render_template('auth/login.html')  
+            flash("Usuario o contraseña incorrectos.", 'danger')
+            return render_template('auth/login.html')
+
+    return render_template('auth/login.html')
 
 
 
@@ -70,6 +86,11 @@ def logout():
 @app.route('/home')
 def home():
     return render_template('home.html')
+
+@app.route('/docente_home')
+def docente_home():
+    return render_template('docente_home.html')
+
 
 ## Usuarios CRUD
 @app.route('/users')
@@ -167,8 +188,29 @@ def create_teacher():
         estado = 'activo'
         id_user = current_user.id 
         
-        fecha_ingreso = datetime.strptime(fecha_ingreso, '%Y-%m-%d')
-                
+        fecha_ingreso = datetime.datetime.strptime(fecha_ingreso, '%Y-%m-%d')
+
+        # Crear usuario automáticamente
+        usuario = ci  # Usar el CI como nombre de usuario
+        print(ci)
+        password = f"{nombres.split()[0]}_{ci}"  # Crear contraseña como nombre_ci
+        print(password)
+        hashed_password = generate_password_hash(password)  # Encriptar contraseña
+        print(hashed_password)
+        nombre_completo = f"{nombres} {apellidos}"
+        print(nombre_completo)
+        estado="activo"
+        print(estado)
+
+        # Insertar el usuario en la tabla `users`
+        cursor = db.connection.cursor()
+        user_query = """
+            INSERT INTO users (usuario, contrasena, nombre_completo, rol, estado)
+            VALUES (%s, %s, %s, %s, %s)
+        """
+        cursor.execute(user_query, (usuario, hashed_password, nombre_completo, 'docente', estado))
+        db.connection.commit()
+
         teacher = Teacher(0, nombres, apellidos, sexo, ci, num_celular, fecha_ingreso, estado, id_user)
                 
         teacher_id = ModelTeacher.create_teacher(db, teacher)
@@ -509,6 +551,67 @@ def students():
         flash("Ocurrió un error al recuperar Estudiantes.")
         return redirect(url_for('home'))
     
+# Listar estudiantes segun el docente
+@app.route('/students_teacher')
+def students_teacher():
+    try:
+        # Obtener el CI del docente logeado
+        ci = current_user.usuario  # Suponiendo que el 'usuario' contiene el CI del docente
+        print(ci)
+        # Obtener el teacher_id usando el CI
+        cursor = db.connection.cursor()
+        cursor.execute("""
+            SELECT id FROM teachers WHERE ci = %s
+        """, (ci,))
+        teacher = cursor.fetchone()
+
+        if not teacher:
+            flash("No se encontró al docente asociado.", 'warning')
+            return redirect(url_for('home'))  # Redirigir a la página principal si no se encuentra el docente
+
+        teacher_id = teacher[0]  # El ID del docente
+        print(teacher_id)
+        # Obtener los estudiantes asociados al docente
+        cursor.execute("""
+            SELECT 
+                sn.id,
+                s.nombres AS nombre_estudiante,
+                s.apellidos as apellidos,
+                s.ci as ci,
+                s.genero,
+                s.num_celular,
+                s.fecha_nacimiento,
+                s.fecha_ingreso,
+                CONCAT(g.nombre, ' - ', g.ciclo) AS grado,
+                sec.nombre AS seccion,
+                sub.nombre AS materia
+                
+            FROM 
+                stundent_notes sn
+            JOIN inscriptions i ON sn.id_inscription = i.id
+            JOIN students s ON i.id_student = s.id
+            JOIN grados g ON i.id_grado = g.id
+            JOIN sections sec ON i.id_section = sec.id
+            JOIN subjects sub ON sn.id_subject = sub.id
+            JOIN subject_teacher st ON st.id_subject = sub.id
+            WHERE st.id_teacher = %s AND i.año_escolar = 2024
+            ORDER BY s.nombres, g.nombre, sec.nombre, sub.nombre
+        """, (teacher_id,))  # Filtramos por el ID del docente
+
+        students = cursor.fetchall()
+
+        if not students:
+            flash("No se encontraron estudiantes asociados a este docente.", 'warning')
+
+        return render_template('students/students_teacher.html', students=students)
+
+    except Exception as ex:
+        flash("Ocurrió un error al recuperar los estudiantes.", 'danger')
+        return redirect(url_for('home'))
+    finally:
+        cursor.close()
+
+    
 @app.route('/create_student', methods=['GET', 'POST'])
 def create_student():
     if request.method == 'POST':
@@ -753,6 +856,73 @@ def notes():
     finally:
         cursor.close()
 
+# notas para docente
+@app.route('/notes_teacher')
+def notes_teacher():
+    try:
+        if current_user.rol != 'docente':
+            flash("No tienes permisos para acceder a esta sección.", 'danger')
+            return redirect(url_for('docente_home.html'))
+
+        # Obtener el ID del docente actual
+        ci = current_user.usuario
+        print(ci)
+        cursor = db.connection.cursor()
+        cursor.execute("""
+            SELECT id FROM teachers WHERE ci = %s
+        """, (ci,))
+        teacher = cursor.fetchone()
+
+        if not teacher:
+            flash("No se encontró al docente asociado.", 'warning')
+            return redirect(url_for('docente_home.html'))
+
+        teacher_id = teacher[0]
+        print(teacher_id)
+
+        # Consulta para listar estudiantes de las materias del docente
+        cursor.execute("""
+            SELECT 
+                sn.id,
+                s.nombres AS nombre_estudiante,
+                CONCAT(g.nombre, ' - ', g.ciclo) AS grado,
+                sec.nombre AS seccion,
+                sub.nombre AS materia,
+                sn.nota1, 
+                sn.nota2, 
+                sn.nota3, 
+                sn.nota4, 
+                sn.promedio, 
+                sn.observaciones
+            FROM 
+                stundent_notes sn
+            JOIN inscriptions i ON sn.id_inscription = i.id
+            JOIN students s ON i.id_student = s.id
+            JOIN grados g ON i.id_grado = g.id
+            JOIN sections sec ON i.id_section = sec.id
+            JOIN subjects sub ON sn.id_subject = sub.id
+            JOIN subject_teacher st ON st.id_subject = sub.id
+            WHERE st.id_teacher = %s AND i.año_escolar = %s
+            ORDER BY s.nombres, g.nombre, sec.nombre, sub.nombre
+        """, (teacher_id, 2024))  # Año escolar puede ser dinámico
+
+        # Obtener todos los resultados
+        notes = cursor.fetchall()
+
+        # Si no hay resultados
+        if not notes:
+            flash("No se encontraron notas para este año escolar.", 'warning')
+        
+        print(notes)
+        return render_template('notes/teacher_notes.html', notes=notes)
+
+    except Exception as e:
+        flash(f"Error al listar las notas: {str(e)}", 'danger')
+
+    finally:
+        cursor.close()
+
+
 @app.route('/edit_student_note/<int:id>', methods=['GET', 'POST'])
 def edit_student_note(id):
     try:
@@ -787,7 +957,13 @@ def edit_student_note(id):
             cursor.execute(update_sql, (nota1, nota2, nota3, nota4, observaciones, id))
             db.connection.commit()
             flash('Notas actualizadas con éxito.', 'success')
-            return redirect(url_for('notes'))  # Ruta donde se muestran las notas
+            # Verificar el rol del usuario
+            if current_user.rol == 'docente':
+                # Redirigir a las notas del docente
+                return redirect(url_for('notes_teacher'))  # Cambia esto si la ruta del docente es diferente
+            else:
+                # Redirigir a las notas del administrador o vista general
+                return redirect(url_for('notes'))  # Ruta donde se muestran las notas de todos
 
         return render_template('notes/edit_student_note.html', student_note=student_note)
     except Exception as e:
@@ -805,6 +981,91 @@ def edit_student_note(id):
 def report_users():    
     users = ModelUser.get_all_users(db)    
     return render_template('users/report_users.html', users=users)
+
+# Reportes de notas de un estudiante
+@app.route('/report_students')
+def report_students():    
+    try:
+        students = ModelStudent.get_all_students(db)  
+        return render_template('reports/students.html', students=students, user_role=current_user.rol)
+    except Exception as ex:
+        flash("Ocurrió un error al recuperar Estudiantes.")
+        return redirect(url_for('home'))
+
+@app.route('/generate_pdf/<int:student_id>')
+def generate_pdf(student_id):
+    # Obtener información del estudiante y sus notas
+    cursor = db.connection.cursor()
+    cursor.execute("""
+        SELECT CONCAT(s.nombres,' ',s.apellidos) as nombres, CONCAT(g.nombre, ' - ', g.ciclo) AS grado, concat('Paralelo "', sec.nombre, '"') AS seccion
+        FROM students s
+        JOIN inscriptions i ON s.id = i.id_student
+        JOIN grados g ON i.id_grado = g.id
+        JOIN sections sec ON i.id_section = sec.id
+        WHERE s.id = %s
+    """, (student_id,))
+    student_info = cursor.fetchone()
+
+    cursor.execute("""
+        SELECT sub.nombre AS materia, sn.nota1, sn.nota2, sn.nota3, sn.nota4,
+               ROUND((sn.nota1 + sn.nota2 + sn.nota3 + sn.nota4)/4, 2) AS promedio
+        FROM stundent_notes sn
+        JOIN subjects sub ON sn.id_subject = sub.id
+        WHERE sn.id_inscription = (
+            SELECT id FROM inscriptions WHERE id_student = %s
+        )
+    """, (student_id,))
+    student_notes = cursor.fetchall()
+    cursor.close()
+
+    # Crear PDF
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter    
+
+    # Título
+    pdf.setFont("Helvetica-Bold", 24)
+    pdf.drawString(200, height - 50, "Reporte Académico")
+
+    # Información del estudiante
+    pdf.setFont("Helvetica", 12)
+    y_position = height - 150
+    pdf.drawString(50, y_position, f"Nombre del Estudiante: {student_info[0]}")
+    pdf.drawString(50, y_position - 20, f"Grado: {student_info[1]}")
+    pdf.drawString(50, y_position - 40, f"Sección: {student_info[2]}")
+
+    # Encabezado de tabla
+    y_position -= 80
+    table_data = [["Materia", "Nota 1", "Nota 2", "Nota 3", "Nota 4", "Promedio"]]
+    for note in student_notes:
+        table_data.append([note[0], note[1], note[2], note[3], note[4], note[5]])
+
+    # Crear tabla
+    table = Table(table_data, colWidths=[120, 50, 50, 50, 50, 60])
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.blue),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+    ]))
+
+    # Dibujar tabla en el PDF
+    table.wrapOn(pdf, width, height)
+    table.drawOn(pdf, 50, y_position - len(table_data) * 20 - 10)
+
+    # Finalizar PDF
+    pdf.save()
+    buffer.seek(0)
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=f"reporte_estudiante_{student_info[0]}.pdf",
+        mimetype='application/pdf'
+    )
+
 
 @app.route('/protected')
 @login_required

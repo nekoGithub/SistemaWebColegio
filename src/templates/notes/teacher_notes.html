@@ -1,8 +1,6 @@
-{% if current_user.role == 'administrador' %}
-    {% extends 'base.html' %}
-{% else %}
-    {% extends 'base_docente.html' %}
-{% endif %}
+
+{% extends 'base_docente.html' %}
+
 
 
 {% block title %}Notas{% endblock %}

@@ -78,101 +78,28 @@
 
         <!-- Divider -->
         <hr class="sidebar-divider" />
-        <!-- Heading -->
-        <div class="sidebar-heading">
-          Usuarios
-        </div>
-
-        <!-- Nav Item - Charts -->
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('users') }}">
-            <i class="fas fa-fw fa-users"></i>
-            <span>Usuarios</span></a
-          >
-        </li>
-        <div class="sidebar-heading">
-          Materias
-        </div>
-
-        <!-- Nav Item - Charts -->
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('grades') }}">
-            <i class="fas fa-chalkboard-teacher"></i>
-            <span>Grado</span></a
-          >
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('sections') }}">
-            <i class="fas fa-pencil-alt"></i>
-            <span>Secciones</span></a
-          >
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('subjects') }}">
-            <i class="fas fa-fw fa-book"></i>
-            <span>Materias</span></a
-          >
-        </li>
-
-        <!-- Heading -->
-        <div class="sidebar-heading">
-          Estudiantes
-        </div>
-        <!-- Nav Item - Charts -->
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('students') }}">
-            <i class="fas fa-user-graduate"></i>
-            <span>Estudiantes</span></a
-          >
-        </li>
-        <!-- Heading -->
-        <div class="sidebar-heading">
-          Docentes
-        </div>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('teachers') }}">
-            <i class="fas fa-chalkboard-teacher"></i>
-            <span>Docentes</span></a
-          >
-        </li>
-
-        <!-- Heading -->
-        <div class="sidebar-heading">
-          Incripciones
-        </div>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('inscriptions') }}">
-            <i class="fas fa-chalkboard-teacher"></i>
-            <span>inscriptions</span></a
-          >
-        </li>
-
-        <!-- Heading -->
-        <div class="sidebar-heading">
-          Notas
-        </div>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('notes') }}">
-            <i class="fas fa-chalkboard-teacher"></i>
-            <span>Notas del estudiante</span></a
-          >
-        </li>
+        <!-- Heading -->        
        
         <!-- Heading -->
         <div class="sidebar-heading">
-          Reportes
+          Listas notas
         </div>
-         <!-- Nav Item - Charts -->
+         <!-- Nav Item - Charts -->         
          <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('report_users') }}">
+          <a class="nav-link" href="{{ url_for('notes_teacher') }}">
             <i class="fas fa-fw fa-users"></i>
-            <span>Reportes Usuarios</span></a
+            <span>Notas estudiantes </span></a
           >
         </li>
+        <!-- Heading -->
+        <div class="sidebar-heading">
+          Lista de estudiantes
+        </div>
+         <!-- Nav Item - Charts -->         
          <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('report_students') }}">
+          <a class="nav-link" href="{{ url_for('students_teacher') }}">
             <i class="fas fa-fw fa-users"></i>
-            <span>Reportes Notas </span></a
+            <span>Estudiantes </span></a
           >
         </li>
 

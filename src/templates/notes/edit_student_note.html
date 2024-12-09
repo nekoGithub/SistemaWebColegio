@@ -1,4 +1,8 @@
-{% extends 'base.html' %}
+{% if current_user.role == 'administrador' %}
+    {% extends 'base.html' %}
+{% else %}
+    {% extends 'base_docente.html' %}
+{% endif %}
 
 {% block content %}
 <div class="container">
