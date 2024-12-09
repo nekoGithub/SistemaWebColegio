@@ -39,10 +39,27 @@
       href="{{ url_for('static', filename='css/sb-admin-2.min.css') }}"
       rel="stylesheet"
     />
-    
-    <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.2.0/css/buttons.dataTables.min.css">
+
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/buttons/3.2.0/css/buttons.dataTables.min.css"
+    />
     {% block customCSS %} {% endblock %}
+
+    <!-- FullCalendar CSS -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.2.0/fullcalendar.min.css"
+      rel="stylesheet"
+    />
+    <!-- jQuery (necesario para FullCalendar) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <!-- FullCalendar JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.2.0/fullcalendar.min.js"></script>
   </head>
 
   <body id="page-top">
@@ -57,12 +74,12 @@
         <!-- Sidebar - Brand -->
         <a
           class="sidebar-brand d-flex align-items-center justify-content-center"
-          href="{{ url_for('home') }}"
+          href="{{ url_for('docente_home') }}"
         >
           <div class="sidebar-brand-icon rotate-n-15">
             <i class="fas fa-laugh-wink"></i>
           </div>
-          <div class="sidebar-brand-text mx-3">SB Admin <sup>2</sup></div>
+          <div class="sidebar-brand-text mx-3">Colegio Nueva Era</div>
         </a>
 
         <!-- Divider -->
@@ -70,7 +87,7 @@
 
         <!-- Nav Item - Dashboard -->
         <li class="nav-item active">
-          <a class="nav-link" href="{{ url_for('home') }}">
+          <a class="nav-link" href="{{ url_for('docente_home') }}">
             <i class="fas fa-fw fa-tachometer-alt"></i>
             <span>Panel de control</span></a
           >
@@ -78,25 +95,21 @@
 
         <!-- Divider -->
         <hr class="sidebar-divider" />
-        <!-- Heading -->        
-       
         <!-- Heading -->
-        <div class="sidebar-heading">
-          Listas notas
-        </div>
-         <!-- Nav Item - Charts -->         
-         <li class="nav-item">
+
+        <!-- Heading -->
+        <div class="sidebar-heading">Listas notas</div>
+        <!-- Nav Item - Charts -->
+        <li class="nav-item">
           <a class="nav-link" href="{{ url_for('notes_teacher') }}">
             <i class="fas fa-fw fa-users"></i>
             <span>Notas estudiantes </span></a
           >
         </li>
         <!-- Heading -->
-        <div class="sidebar-heading">
-          Lista de estudiantes
-        </div>
-         <!-- Nav Item - Charts -->         
-         <li class="nav-item">
+        <div class="sidebar-heading">Lista de estudiantes</div>
+        <!-- Nav Item - Charts -->
+        <li class="nav-item">
           <a class="nav-link" href="{{ url_for('students_teacher') }}">
             <i class="fas fa-fw fa-users"></i>
             <span>Estudiantes </span></a
@@ -202,11 +215,9 @@
                   aria-expanded="false"
                 >
                   <span class="mr-2 d-none d-lg-inline text-gray-600 small">
-                    {% if current_user.is_authenticated %}
-                        {{ current_user.nombre_completo }}
-                    {% else %}
-                        Invitado
-                    {% endif %}
+                    {% if current_user.is_authenticated %} {{
+                    current_user.nombre_completo }} {% else %} Invitado {% endif
+                    %}
                   </span>
                   <img
                     class="img-profile rounded-circle"
@@ -218,7 +229,12 @@
                   class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                   aria-labelledby="userDropdown"
                 >
-                  <a class="dropdown-item" href="{{ url_for('logout') }}" data-toggle="modal" data-target="#logoutModal">
+                  <a
+                    class="dropdown-item"
+                    href="{{ url_for('logout') }}"
+                    data-toggle="modal"
+                    data-target="#logoutModal"
+                  >
                     <i
                       class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"
                     ></i>
@@ -232,19 +248,17 @@
 
           <!-- Begin Page Content -->
           <div class="container-fluid">
-            <!-- Page Heading -->            
+            <!-- Page Heading -->
 
             <!-- Aquí es donde se muestra el contenido de cada página específica -->
             {% block content %}
             <!-- Contenido por defecto que se puede sobrescribir -->
-            {% endblock %}           
-            
+            {% endblock %}
           </div>
           <!-- /.container-fluid -->
         </div>
         <!-- End of Main Content -->
 
-        
         <footer class="sticky-footer bg-white">
           <div class="container my-auto">
             <div class="copyright text-center my-auto">
@@ -252,7 +266,6 @@
             </div>
           </div>
         </footer>
-        
       </div>
       <!-- End of Content Wrapper -->
     </div>
@@ -275,7 +288,9 @@
       <div class="modal-dialog" role="document">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="exampleModalLabel">¿Listo para partir?</h5>
+            <h5 class="modal-title" id="exampleModalLabel">
+              ¿Listo para partir?
+            </h5>
             <button
               class="close"
               type="button"
@@ -286,7 +301,8 @@
             </button>
           </div>
           <div class="modal-body">
-            Seleccione "Cerrar sesión" a continuación si está listo para finalizar su sesión actual.
+            Seleccione "Cerrar sesión" a continuación si está listo para
+            finalizar su sesión actual.
           </div>
           <div class="modal-footer">
             <button
@@ -296,12 +312,14 @@
             >
               Cancelar
             </button>
-            <a class="btn btn-primary" href="{{ url_for('login') }}">Cerrar sesión</a>
+            <a class="btn btn-primary" href="{{ url_for('login') }}"
+              >Cerrar sesión</a
+            >
           </div>
         </div>
       </div>
     </div>
-   
+
     <!-- Bootstrap core JavaScript-->
     <script src="{{ url_for('static', filename='vendor/jquery/jquery.min.js') }}"></script>
     <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
@@ -321,38 +339,70 @@
     <script src="js/demo/chart-area-demo.js"></script>
     <script src="{{ url_for('static', filename='js/demo/chart-area-demo.js') }}"></script>
     <script src="js/demo/chart-pie-demo.js"></script>
-    <script src="{{ url_for('static', filename='js/demo/chart-pie-demo.js') }}"></script>   
+    <script src="{{ url_for('static', filename='js/demo/chart-pie-demo.js') }}"></script>
     <!-- Datatables - reportes - idioma español -->
-    <br><script src="http://code.jquery.com/jquery-1.9.1.js"></script>
-<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css" />
-<script src="http://code.jquery.com/ui/1.10.2/jquery-ui.js"></script>
-<script src="https://cdn.datatables.net/1.10.4/js/jquery.dataTables.js"></script>
-<link rel="stylesheet" href="https://cdn.datatables.net/1.10.4/css/jquery.dataTables.min.css">
- 
-<script type="text/javascript" language="javascript" src="//code.jquery.com/jquery-1.12.3.js">
-</script>
-<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js">
-</script>
-<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.2.1/js/dataTables.buttons.min.js">
-</script>
-<script type="text/javascript" language="javascript" src="//cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js">
-</script>
-<script type="text/javascript" language="javascript" src="//cdn.rawgit.com/bpampuch/pdfmake/0.1.18/build/pdfmake.min.js">
-</script>
-<script type="text/javascript" language="javascript" src="//cdn.rawgit.com/bpampuch/pdfmake/0.1.18/build/vfs_fonts.js">
-</script>
-<script type="text/javascript" language="javascript" src="//cdn.datatables.net/buttons/1.2.1/js/buttons.html5.min.js">
-</script>
-<!-- Incluir CSS de selección -->
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/select/1.3.3/css/select.dataTables.min.css">
-<!-- Incluir JS de selección -->
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/select/1.3.3/js/dataTables.select.min.js"></script>
+    <br />
+    <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+    <link
+      rel="stylesheet"
+      href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css"
+    />
+    <script src="http://code.jquery.com/ui/1.10.2/jquery-ui.js"></script>
+    <script src="https://cdn.datatables.net/1.10.4/js/jquery.dataTables.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/1.10.4/css/jquery.dataTables.min.css"
+    />
 
-    {% block script %}
-    
-    {% endblock %}
-   
-    {% endblock %}
+    <script
+      type="text/javascript"
+      language="javascript"
+      src="//code.jquery.com/jquery-1.12.3.js"
+    ></script>
+    <script
+      type="text/javascript"
+      language="javascript"
+      src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      language="javascript"
+      src="https://cdn.datatables.net/buttons/1.2.1/js/dataTables.buttons.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      language="javascript"
+      src="//cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      language="javascript"
+      src="//cdn.rawgit.com/bpampuch/pdfmake/0.1.18/build/pdfmake.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      language="javascript"
+      src="//cdn.rawgit.com/bpampuch/pdfmake/0.1.18/build/vfs_fonts.js"
+    ></script>
+    <script
+      type="text/javascript"
+      language="javascript"
+      src="//cdn.datatables.net/buttons/1.2.1/js/buttons.html5.min.js"
+    ></script>
+    <!-- Incluir CSS de selección -->
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://cdn.datatables.net/select/1.3.3/css/select.dataTables.min.css"
+    />
+    <!-- Incluir JS de selección -->
+    <script
+      type="text/javascript"
+      charset="utf8"
+      src="https://cdn.datatables.net/select/1.3.3/js/dataTables.select.min.js"
+    ></script>
+
+    {% block script %} {% endblock %} {% endblock %}
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"
       integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj"

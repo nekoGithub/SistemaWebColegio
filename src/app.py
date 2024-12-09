@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify,send_file
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify,send_file, make_response
 from flask_mysqldb import MySQL
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
@@ -7,8 +7,9 @@ from datetime import datetime
 import datetime
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
-from reportlab.platypus import Table, TableStyle
+from reportlab.platypus import Table, TableStyle, SimpleDocTemplate
 from reportlab.pdfgen import canvas
+from io import BytesIO
 from io import BytesIO
 import os
 
@@ -611,7 +612,74 @@ def students_teacher():
     finally:
         cursor.close()
 
-    
+# Reportes por materia del docente
+@app.route('/get_subjects')
+def get_subjects():
+    try:
+        ci = current_user.usuario  # CI del docente logeado
+        cursor = db.connection.cursor()
+        cursor.execute("""
+            SELECT id FROM teachers WHERE ci = %s
+        """, (ci,))
+        teacher = cursor.fetchone()
+
+        if not teacher:
+            return jsonify({"error": "No se encontró al docente asociado."}), 404
+
+        teacher_id = teacher[0]
+        cursor.execute("""
+            SELECT sub.id, sub.nombre
+            FROM subject_teacher st
+            JOIN subjects sub ON st.id_subject = sub.id
+            WHERE st.id_teacher = %s
+        """, (teacher_id,))
+        subjects = cursor.fetchall()
+
+        return jsonify(subjects)  # Retorna las materias en formato JSON
+    except Exception as ex:
+        return jsonify({"error": "Ocurrió un error al recuperar las materias."}), 500
+    finally:
+        cursor.close()
+
+@app.route('/get_students/<int:subject_id>')
+def get_students(subject_id):
+    try:
+        cursor = db.connection.cursor()
+        cursor.execute("""
+            SELECT 
+                s.nombres, 
+                s.apellidos, 
+                s.ci, 
+                CONCAT(g.nombre, ' - ', g.ciclo) AS grado,
+                sec.nombre AS seccion,
+                sub.nombre AS materia
+            FROM 
+                stundent_notes sn
+            JOIN inscriptions i ON sn.id_inscription = i.id
+            JOIN students s ON i.id_student = s.id
+            JOIN grados g ON i.id_grado = g.id
+            JOIN sections sec ON i.id_section = sec.id
+            JOIN subjects sub ON sn.id_subject = sub.id
+            WHERE 
+                sn.id_subject = %s 
+                AND i.año_escolar = 2024
+            ORDER BY 
+                s.nombres;
+        """, (subject_id,))
+        students = cursor.fetchall()
+
+        return jsonify(students)  # Retorna los estudiantes en formato JSON
+    except Exception as ex:
+        return jsonify({"error": "Ocurrió un error al recuperar los estudiantes."}), 500
+    finally:
+        cursor.close()
+
+
+
+
+
+
+
 @app.route('/create_student', methods=['GET', 'POST'])
 def create_student():
     if request.method == 'POST':

@@ -5,57 +5,181 @@
 
 {% block content %}
 <div class="container-fluid">
-  <h1 class="h3 mb-4 text-gray-800">Estudiantes</h1>
+  <h1 class="h3 mb-4 text-gray-800">Estudiantes por Materia</h1>
+  
+  <!-- Selección de materia -->
+  <div class="form-group">
+    <label for="subjectSelect">Seleccionar Materia</label>
+    <select id="subjectSelect" class="form-control">
+      <option value="">Seleccione una materia</option>
+    </select>
+  </div>
 
+  <!-- Tabla para estudiantes -->
   <div class="card shadow mb-4">
-    <div class="card-header py-3 d-flex justify-content-between align-items-center">
-      <h6 class="m-0 font-weight-bold text-primary">Listado de Estudiantes</h6>      
+    <div class="card-header py-3">
+      <h6 class="m-0 font-weight-bold text-primary">Listado de Estudiantes</h6>
     </div>
     <div class="card-body">
-      <!-- Tabla con la clase DataTable -->
-      <table id="studentsTable" class="display" cellspacing="0" width="100%">
+      <table id="studentsTable" class="table table-bordered">
         <thead>
           <tr>
             <th>Nro</th>
             <th>Nombres</th>
             <th>Apellidos</th>
-            <th>CI</th>            
-            <th>Genero</th>            
-            <th>Celular</th>
-                       
-            <th>estado</th>            
-                        
+            <th>CI</th>
+            <th>Grado</th>
+            <th>Sección</th>
+            <th>Materia</th>
           </tr>
         </thead>
         <tbody>
-          {% for student in students %}
-          <tr>
-            <td>{{ student[0] }}</td>
-            <td>{{ student[1] }}</td>
-            <td>{{ student[2] }}</td>
-            <td>{{ student[3] }}</td>
-            <td>{{ student[4] }}</td>
-            <td>{{ student[5] }}</td>                     
-            <td><span class="badge badge-success">{{ student[7] }}</span></td>                                                
-          </tr>
-          {% endfor %}
+          <!-- Aquí se llenarán los datos dinámicamente -->
         </tbody>
       </table>
     </div>
   </div>
 </div>
+
 {% endblock %}
 
 {% block script %}
 <script>
   $(document).ready(function () {
-    $("#studentsTable").DataTable({
-      order: [[0, 'desc']], // Ordenar la columna 0 (ID) de forma descendente
-      language: {
-        url: '//cdn.datatables.net/plug-ins/2.1.8/i18n/es-MX.json',
+    // Inicializar DataTable
+    const table = $("#studentsTable").DataTable({
+        language: {
+            url: "//cdn.datatables.net/plug-ins/2.1.8/i18n/es-MX.json",
+        },
+        dom: "Bfrtip",
+        buttons: [
+            "copyHtml5",
+            "excelHtml5",
+            "csvHtml5",
+            {
+                extend: "pdfHtml5",
+                text: "Generar PDF",
+                orientation: "landscape",
+                title: function () {
+                    // Obtener el nombre de la materia seleccionada
+                    const subjectName = $("#subjectSelect option:selected").text();
+                    return `REPORTE DE ESTUDIANTES - ${subjectName}`;
+                },
+                customize: function (doc) {
+                    // Centrar título y encabezado
+                    doc.content[1].alignment = "center";
+                    doc.content[1].table.widths = ["4%","10%", "16%", "16%", "16%", "16%", "16%"];
+
+                    // Estilo de encabezado de la tabla
+                    doc.styles.tableHeader = {
+                        fontSize: 12,
+                        bold: true,
+                        fillColor: "#007bff",
+                        color: "#ffffff",
+                        alignment: "center",
+                    };
+                    // Estilo de contenido de la tabla
+                    doc.styles.tableBody = {
+                        fontSize: 10,
+                        alignment: "center",
+                    };
+                    // Estilo del título
+                    doc.styles.title = {
+                        fontSize: 16,
+                        bold: true,
+                        alignment: "center",
+                    };
+                },
+            },
+        ],
+    });
+
+    // Cargar datos según la materia seleccionada
+    $("#subjectSelect").change(function () {
+        const subjectId = $(this).val();
+
+        if (subjectId) {
+            $.ajax({
+                url: `/get_students/${subjectId}`, // URL para obtener los datos de estudiantes
+                type: "GET",
+                success: function (data) {
+                    // Actualizar la tabla con los nuevos datos
+                    table.clear(); // Limpiar la tabla
+                    data.forEach((student, index) => {
+                        table.row.add([
+                            index + 1, // Número                            
+                            student[0],
+                            student[1],
+                            student[2],
+                            student[3],
+                            student[4],
+                            student[5],
+                        ]);
+                    });
+                    table.draw(); // Dibujar la tabla con los datos nuevos
+                },
+                error: function () {
+                    alert("Error al cargar los datos. Por favor, intenta nuevamente.");
+                },
+            });
+        } else {
+            table.clear().draw(); // Si no hay materia seleccionada, limpiar la tabla
+        }
+    });
+});
+
+
+
+  
+  document.addEventListener('DOMContentLoaded', function () {
+    const subjectSelect = document.getElementById('subjectSelect');
+    const studentsTableBody = document.querySelector('#studentsTable tbody');
+
+    // Cargar las materias del docente al cargar la página
+    fetch('/get_subjects')
+      .then(response => response.json())
+      .then(subjects => {
+        subjects.forEach(subject => {
+          const option = document.createElement('option');
+          option.value = subject[0]; // ID de la materia
+          option.textContent = subject[1]; // Nombre de la materia
+          subjectSelect.appendChild(option);
+        });
+      })
+      .catch(error => console.error('Error al cargar las materias:', error));
+
+    // Actualizar la tabla de estudiantes cuando se selecciona una materia
+    subjectSelect.addEventListener('change', function () {
+      const subjectId = this.value;
+      if (!subjectId) {
+        studentsTableBody.innerHTML = ''; // Limpia la tabla si no hay materia seleccionada
+        return;
       }
+
+      fetch(`/get_students/${subjectId}`)
+        .then(response => response.json())
+        .then(students => {
+          studentsTableBody.innerHTML = ''; // Limpia la tabla antes de actualizar
+          let index = 0
+          students.forEach(student => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${index = index + 1}</td>
+              <td>${student[0]}</td>
+              <td>${student[1]}</td>
+              <td>${student[2]}</td>
+              <td>${student[3]}</td>
+              <td>${student[4]}</td>
+              <td>${student[5]}</td>
+            `;
+            studentsTableBody.appendChild(row);
+          });
+        })
+        .catch(error => console.error('Error al cargar los estudiantes:', error));
     });
   });
+
+
 </script>
 {% endblock %}
 
