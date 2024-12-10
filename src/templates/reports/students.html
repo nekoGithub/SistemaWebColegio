@@ -58,6 +58,11 @@
 
 {% block script %}
 <script>
+  $("#studentsTable").DataTable({
+    language: {
+        url: '//cdn.datatables.net/plug-ins/2.1.8/i18n/es-MX.json',
+    },   
+  });
   $(document).ready(function () {
     $("#studentsTable").DataTable({
       order: [[0, 'desc']], // Ordenar la columna 0 (ID) de forma descendente

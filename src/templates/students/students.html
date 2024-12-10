@@ -16,7 +16,7 @@
     </div>
     <div class="card-body">
       <!-- Tabla con la clase DataTable -->
-      <table id="studentsTable" class="display" cellspacing="0" width="100%">
+      <table id="studentsTable2" class="display" cellspacing="0" width="100%">
         <thead>
           <tr>
             <th>Nro</th>
@@ -59,13 +59,14 @@
 
 {% block script %}
 <script>
-  $(document).ready(function () {
-    $("#studentsTable").DataTable({
-      order: [[0, 'desc']], // Ordenar la columna 0 (ID) de forma descendente
-      language: {
+    $(document).ready(function () {
+    $("#studentsTable2").DataTable();
+  });
+
+  $("#studentsTable2").DataTable({
+    language: {
         url: '//cdn.datatables.net/plug-ins/2.1.8/i18n/es-MX.json',
-      }
-    });
+    },   
   });
 </script>
 {% endblock %}
